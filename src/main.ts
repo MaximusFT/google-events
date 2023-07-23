@@ -71,7 +71,7 @@ const googleEvents = {
   inputTypeArray: ['checkbox', 'radio'],
 
   getElementTagName: function (element: HTMLElement) {
-    return element.dataset.uetElement ? element.dataset.uetElement.toUpperCase() : element.tagName;
+    return element.dataset.gtmElement ? element.dataset.gtmElement.toUpperCase() : element.tagName;
   },
   getEventTarget: function (event: Event) {
     return event.composed ? event.composedPath()[0] : event.target;
@@ -119,9 +119,9 @@ const googleEvents = {
       }, {});
   },
   disableElement: function (element: HTMLElement) {
-    element.dataset.uetOff = 'true';
+    element.dataset.gtmOff = 'true';
   },
-  gtmEcommDetail: function (element: HTMLElement, dataUet: DataGtm) {
+  gtmEcommDetail: function (element: HTMLElement, dataGtm: DataGtm) {
     const eventName = this.findClosest(element, 'data-ecomm-event-name');
     if (!eventName) {
       return null;
@@ -138,7 +138,7 @@ const googleEvents = {
       'product-discount': this.findClosest(element, 'data-ecomm-product-discount'),
       'product-list-price': this.findClosest(element, 'data-ecomm-product-list-price'),
       'product-variant': this.findClosest(element, 'data-ecomm-product-variant'),
-      'product-position': this.findClosest(element, 'data-ecomm-product-position', dataUet['link-place']),
+      'product-position': this.findClosest(element, 'data-ecomm-product-position', dataGtm['link-place']),
       // Checkout part, even-name = 'place_order'
       'product-coupon-code': this.findClosest(element, 'data-ecomm-product-coupon-code'),
       'checkout-step': this.findClosest(element, 'data-ecomm-checkout-step'),
@@ -155,7 +155,7 @@ const googleEvents = {
     };
   },
   gtmEventDetail: function (element: HTMLInputElement, root: HTMLElement, customActionName?: string) {
-    if (element.dataset.uetOff !== undefined) {
+    if (element.dataset.gtmOff !== undefined) {
       return false;
     }
     const urlRoot = document.location.protocol + '//' + document.location.host;
@@ -166,27 +166,27 @@ const googleEvents = {
     let action = null;
 
     const addDetails = [];
-    if (element.dataset.uetAddDetails) {
-      addDetails.push(element.dataset.uetAddDetails);
+    if (element.dataset.gtmAddDetails) {
+      addDetails.push(element.dataset.gtmAddDetails);
     }
-    if (element.dataset.uetAddDetailsLabel) {
+    if (element.dataset.gtmAddDetailsLabel) {
       // Example add-details case: Label + Value
       // total featured items: ${total number of featured items}
-      addDetails.push(element.dataset.uetAddDetailsLabel + ': ' + element.dataset.uetAddDetailsValue);
+      addDetails.push(element.dataset.gtmAddDetailsLabel + ': ' + element.dataset.gtmAddDetailsValue);
     }
 
-    const cname = this.findInParents(element, root, 'data-uet-cname') || 'no-cname';
-    const linkHierarchy = this.findInParents(element, root, 'data-uet-link-hierarchy');
+    const cname = this.findInParents(element, root, 'data-gtm-cname') || 'no-cname';
+    const linkHierarchy = this.findInParents(element, root, 'data-gtm-link-hierarchy');
 
-    const linkLabelPrefix = this.findClosest(element, 'data-uet-link-label-prefix');
-    const restriction = this.findClosest(element, 'data-uet-restriction', 'public');
-    const widgetPosition = this.findClosest(element, 'data-uet-widget-position');
-    const pageArea = this.findClosest(element, 'data-uet-page-area', '2');
+    const linkLabelPrefix = this.findClosest(element, 'data-gtm-link-label-prefix');
+    const restriction = this.findClosest(element, 'data-gtm-restriction', 'public');
+    const widgetPosition = this.findClosest(element, 'data-gtm-widget-position');
+    const pageArea = this.findClosest(element, 'data-gtm-page-area', '2');
 
-    const linkPlace = element.dataset.uetLinkPlace || '1';
+    const linkPlace = element.dataset.gtmLinkPlace || '1';
 
     const linkLabelPure =
-      element.dataset.uetLinkLabel || element?.textContent?.replace(/^\s+/, '')?.replace(/\s+$/, '');
+      element.dataset.gtmLinkLabel || element?.textContent?.replace(/^\s+/, '')?.replace(/\s+$/, '');
     let linkLabel = linkLabelPrefix ? linkLabelPrefix + ': ' + linkLabelPure : linkLabelPure;
 
     switch (elementTagName) {
@@ -232,13 +232,13 @@ const googleEvents = {
       default:
         action = 'click';
         linkUrl =
-          element.dataset.uetLinkUrl ||
+          element.dataset.gtmLinkUrl ||
           // @ts-ignore: Unreachable code error
           (elementTagName === this.elementsArray[0] ? element?.href : '@' + linkLabelPure);
-        linkType = element.dataset.uetLinkType || (elementTagName === this.elementsArray[0] ? 'link' : 'button');
+        linkType = element.dataset.gtmLinkType || (elementTagName === this.elementsArray[0] ? 'link' : 'button');
         // Rule for custom add-details in search case
-        if (element.dataset.uetAddDetailsSearch) {
-          const relative = document.querySelector('#' + element.dataset.uetAddDetailsSearch) as HTMLInputElement;
+        if (element.dataset.gtmAddDetailsSearch) {
+          const relative = document.querySelector('#' + element.dataset.gtmAddDetailsSearch) as HTMLInputElement;
           const relativeValue = relative.value ? relative.value.trim() : null;
           if (!relativeValue) {
             // Fire only when input field value (after trimming) is NOT an empty string!
@@ -255,24 +255,24 @@ const googleEvents = {
       addDetails.unshift('link-hierarchy: ' + linkHierarchy);
     }
     // Customize tagging in case drawer trigger
-    if (element.dataset.uetDrawerInverseName) {
-      if (element.dataset.uetDrawerInversed === 'true') {
-        linkLabel = element.dataset.uetDrawerInverseName;
-        linkUrl = '@' + element.dataset.uetDrawerInverseName;
+    if (element.dataset.gtmDrawerInverseName) {
+      if (element.dataset.gtmDrawerInversed === 'true') {
+        linkLabel = element.dataset.gtmDrawerInverseName;
+        linkUrl = '@' + element.dataset.gtmDrawerInverseName;
       }
-      element.dataset.uetDrawerInversed = inverseBoolean(element?.dataset?.uetDrawerInversed || 'false');
+      element.dataset.gtmDrawerInversed = inverseBoolean(element?.dataset?.gtmDrawerInversed || 'false');
     }
     // Remove all `null` params in Object before triggered Event and LowerCase all String except link-url
     return this.removeEmptyAndLowerCase({
       action: action,
       event: action,
-      'data-uet': {
+      'data-gtm': {
         'link-type': linkType,
         'link-label': linkLabel,
         'link-url': linkUrl.startsWith(urlRoot) ? linkUrl.substr(urlRoot.length) : linkUrl.toLowerCase(),
         'link-place': linkPlace,
         restriction: restriction,
-        'document-type': element.dataset.uetDocumentType || '',
+        'document-type': element.dataset.gtmDocumentType || '',
         'add-detail': addDetails.join(' | '),
         cname: cname,
         'widget-position': widgetPosition,
@@ -300,7 +300,7 @@ const googleEvents = {
     // @ts-ignore: Unreachable code error
     const data = this.gtmEventDetail(element, root, customActionName);
     if (data) {
-      if (data['data-uet']['link-type'] === 'button') {
+      if (data['data-gtm']['link-type'] === 'button') {
         setTimeout(function () {
           self.callEvent(root, data);
         }, 500);
@@ -351,14 +351,14 @@ const googleEvents = {
   debugConsole: function (data: any) {
     window.sessionStorage.getItem('googleEventDebug') !== null &&
       (console.table || console.log)(
-        Object.assign({}, data?.['data-uet'], { action: data?.action }, data?.['data-ecomm'])
+        Object.assign({}, data?.['data-gtm'], { action: data?.action }, data?.['data-ecomm'])
       );
   },
   init: function () {
     const self = this;
     window.document.addEventListener('click', function (event) {
       const element = self.getEventTarget(event) as HTMLElement;
-      const root = element?.closest?.('[data-uet-event]');
+      const root = element?.closest?.('[data-gtm-event]');
       if (root instanceof HTMLElement) {
         self.onClickEvent(element, root);
       }
@@ -370,7 +370,7 @@ const googleEvents = {
        * Example: 'search', 'header-search', 'any-class-with-word-search'
        */
       const element = self.getEventTarget(event) as HTMLElement;
-      const root = element.closest('[data-uet-event]');
+      const root = element.closest('[data-gtm-event]');
       if (
         root instanceof HTMLElement &&
         self.formElementsArray.includes(element.tagName) &&
@@ -383,7 +383,7 @@ const googleEvents = {
     });
     window.document.addEventListener('focusout', function (event) {
       const element = self.getEventTarget(event) as HTMLElement;
-      const root = element.closest('[data-uet-event]');
+      const root = element.closest('[data-gtm-event]');
       if (
         root instanceof HTMLElement &&
         self.formElementsArray.includes(element.tagName) &&
