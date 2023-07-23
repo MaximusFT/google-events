@@ -1,12 +1,33 @@
 {
-  "name": "google-events",
+  "name": "@maximusft/google-events",
+  "description": "Automatic fired google events or use dataLayer",
   "private": false,
   "version": "0.0.1",
   "author": {
     "name": "MaximusFT"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MaximusFT/google-events.git"
+  },
   "type": "module",
   "main": "dist/app.js",
+  "keywords": [
+    "google",
+    "google tag manager",
+    "dataLayer",
+    "analytic",
+    "gtm",
+    "google version 4"
+  ],
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/MaximusFT/google-events/issues"
+  },
+  "homepage": "https://github.com/MaximusFT/google-events#readme",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
