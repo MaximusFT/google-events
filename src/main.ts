@@ -349,7 +349,7 @@ const googleEvents = {
     return ret.length ? ret.join(' > ') : '';
   },
   debugConsole: function (data: any) {
-    window.sessionStorage.getItem('googleEventDebug') !== null &&
+    window.sessionStorage.getItem('googleEventDebug') &&
       (console.table || console.log)(
         Object.assign({}, data?.['data-gtm'], { action: data?.action }, data?.['data-ecomm'])
       );
