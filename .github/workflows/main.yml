@@ -1,5 +1,4 @@
 name: 'Build'
-description: 'Build project'
 on:
   push:
     branches: [main]
