@@ -10,4 +10,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: build app
-        run: npm ci && npm run build
+        run: npm i && npm run build
