@@ -1,16 +1,11 @@
+import { inverseBoolean, toCamelCase, upperCaseFirstLetter } from './utils';
+
 interface ObjMap {
   [key: string]: any;
 }
 
-enum EventName {
-  'add',
-  'remove',
-  'product_click',
-  'place_order',
-}
-
 interface DataEcommerce {
-  'event-name'?: EventName;
+  'event-name'?: string;
   'product-id'?: string;
   'product-name'?: string;
   'product-brand'?: string;
@@ -36,41 +31,56 @@ interface DataEcommerce {
 }
 
 interface DataGtm {
-  'link-type'?: string;
-  'link-label'?: string;
-  'link-url'?: string;
-  'link-place'?: string;
-  cname?: string;
-  restriction?: string;
+  'add-details'?: string | string[];
+  'component-name'?: string;
+  'component-type'?: string;
   'document-type'?: string;
-  'add-detail'?: string;
-  'widget-position'?: string;
+  'link-label'?: string;
+  'link-place'?: string;
+  'link-type'?: string;
+  'link-url'?: string;
   'page-area'?: string;
+  restriction?: string;
+  'widget-position'?: string;
   [key: string]: any;
 }
 
 interface gtmDataEvent {
-  action: string;
-  'data-gtm': DataGtm;
-  'data-ecomm'?: DataEcommerce;
+  action?: string;
+  event: string;
+  data: DataGtm;
+  ecommerce?: DataEcommerce;
+  [key: string]: any;
 }
 
-const inverseBoolean = (value: string): string => {
-  if (value === 'true') {
-    return 'false';
-  }
-  if (value === 'false') {
-    return 'true';
-  }
-  return 'false';
-};
-
-const googleEvents = {
+export const googleEvents = {
   elementsArray: ['A', 'BUTTON'],
   formElementsArray: ['INPUT', 'TEXTAREA', 'SELECT', 'OPTIONS'],
   inputTypeArray: ['checkbox', 'radio'],
+  attrTags: {},
+  attrMap: {
+    'add-details': 'add-details',
+    'component-name': 'component-name',
+    'component-type': 'component-type',
+    'document-type': 'document-type',
+    'link-label': 'link-label',
+    'link-place': 'link-place',
+    'link-type': 'link-type',
+    'link-url': 'link-url',
+    'page-area': 'page-area',
+    restriction: 'restriction',
+    'widget-position': 'widget-position',
+  } as DataGtm,
 
+  setAttrMapping: function (obj: ObjMap = {}) {
+    this.attrMap = { ...this.attrMap, ...obj };
+  },
+  setAttrTags: function (obj: ObjMap = {}) {
+    this.attrTags = { ...this.attrTags, ...obj };
+    this.setAttrMapping(this.attrTags);
+  },
   getElementTagName: function (element: HTMLElement) {
+    // try find data-gtm-element="button" or data-gtm-element="link"
     return element.dataset.gtmElement ? element.dataset.gtmElement.toUpperCase() : element.tagName;
   },
   getEventTarget: function (event: Event) {
@@ -155,55 +165,56 @@ const googleEvents = {
     };
   },
   gtmEventDetail: function (element: HTMLInputElement, root: HTMLElement, customActionName?: string) {
+    const dataObj = {} as DataGtm;
     if (element.dataset.gtmOff !== undefined) {
       return false;
     }
     const urlRoot = document.location.protocol + '//' + document.location.host;
     const elementTagName = this.getElementTagName(element);
     const elementValue = element.value ? element.value.trim() : null;
-    let linkType = null;
-    let linkUrl = null;
-    let action = null;
-
-    const addDetails = [];
+    dataObj['link-type'];
+    dataObj['link-url'];
+    dataObj['action'];
+    dataObj['add-details'] = [];
     if (element.dataset.gtmAddDetails) {
-      addDetails.push(element.dataset.gtmAddDetails);
+      dataObj['add-details'].push(element.dataset.gtmAddDetails);
     }
     if (element.dataset.gtmAddDetailsLabel) {
       // Example add-details case: Label + Value
       // total featured items: ${total number of featured items}
-      addDetails.push(element.dataset.gtmAddDetailsLabel + ': ' + element.dataset.gtmAddDetailsValue);
+      dataObj['add-details'].push(element.dataset.gtmAddDetailsLabel + ': ' + element.dataset.gtmAddDetailsValue);
     }
 
-    const cname = this.findInParents(element, root, 'data-gtm-cname') || 'no-cname';
-    const linkHierarchy = this.findInParents(element, root, 'data-gtm-link-hierarchy');
+    dataObj['component-name'] = this.findInParents(element, root, 'data-gtm-component-name') || '';
+    dataObj['component-type'] = this.findInParents(element, root, 'data-gtm-component-type') || '';
+    dataObj['link-hierarchy'] = this.findInParents(element, root, 'data-gtm-link-hierarchy');
+    dataObj['page-area'] = this.findClosest(element, 'data-gtm-page-area', '2');
+    dataObj['restriction'] = this.findClosest(element, 'data-gtm-restriction', 'public');
+    dataObj['widget-position'] = this.findClosest(element, 'data-gtm-widget-position');
+    dataObj['link-place'] = element.dataset?.gtmLinkPlace || '1';
+    dataObj['document-type'] = element.dataset?.gtmDocumentType;
+    dataObj['event'] = element.dataset?.event;
 
     const linkLabelPrefix = this.findClosest(element, 'data-gtm-link-label-prefix');
-    const restriction = this.findClosest(element, 'data-gtm-restriction', 'public');
-    const widgetPosition = this.findClosest(element, 'data-gtm-widget-position');
-    const pageArea = this.findClosest(element, 'data-gtm-page-area', '2');
-
-    const linkPlace = element.dataset.gtmLinkPlace || '1';
-
     const linkLabelPure =
       element.dataset.gtmLinkLabel || element?.textContent?.replace(/^\s+/, '')?.replace(/\s+$/, '');
-    let linkLabel = linkLabelPrefix ? linkLabelPrefix + ': ' + linkLabelPure : linkLabelPure;
+    dataObj['link-label'] = linkLabelPrefix ? linkLabelPrefix + ': ' + linkLabelPure : linkLabelPure;
 
     switch (elementTagName) {
       case 'INPUT':
       case 'TEXTAREA':
         if (element.type === 'checkbox') {
           // except for Input-checkbox
-          action = 'click';
-          linkType = 'checkbox ' + (element.checked ? 'checked' : 'unchecked');
-          linkUrl = '@check ' + linkLabelPure;
+          dataObj.action = 'click';
+          dataObj['link-type'] = 'checkbox ' + (element.checked ? 'checked' : 'unchecked');
+          dataObj['link-url'] = '@check ' + linkLabelPure;
           this.disableElement(element);
           break;
         } else if (element.type === 'radio') {
           // except for Input-radio
-          action = 'click';
-          linkType = 'button';
-          linkUrl = '@select ' + linkLabelPure;
+          dataObj.action = 'click';
+          dataObj['link-type'] = 'button';
+          dataObj['link-url'] = '@select ' + linkLabelPure;
           this.disableElement(element);
           break;
         }
@@ -211,14 +222,14 @@ const googleEvents = {
           // Fire only when input field value (after trimming) is NOT an empty string!
           return false;
         }
-        action = 'focusout';
-        linkType = 'field value populated';
-        linkUrl = '@enter ' + (element.getAttribute('name') || element.getAttribute('id') || linkLabelPure);
+        dataObj.action = 'focusout';
+        dataObj['link-type'] = 'field value populated';
+        dataObj['link-url'] = '@enter ' + (element.getAttribute('name') || element.getAttribute('id') || linkLabelPure);
         if (element.className.includes('search')) {
-          action = customActionName || 'focusout';
-          linkType = 'perform search';
-          linkUrl = '@perform search';
-          addDetails.push('search term: ' + elementValue);
+          dataObj.action = customActionName || 'focusout';
+          dataObj['link-type'] = 'perform search';
+          dataObj['link-url'] = '@perform search';
+          dataObj['add-details'].push('search term: ' + elementValue);
         } else {
           // Disable all Inputs elements beside Search fields
           this.disableElement(element);
@@ -230,12 +241,13 @@ const googleEvents = {
       case 'A':
       case 'BUTTON':
       default:
-        action = 'click';
-        linkUrl =
+        dataObj.action = 'click';
+        dataObj['link-url'] =
           element.dataset.gtmLinkUrl ||
           // @ts-ignore: Unreachable code error
           (elementTagName === this.elementsArray[0] ? element?.href : '@' + linkLabelPure);
-        linkType = element.dataset.gtmLinkType || (elementTagName === this.elementsArray[0] ? 'link' : 'button');
+        dataObj['link-type'] =
+          element.dataset.gtmLinkType || (elementTagName === this.elementsArray[0] ? 'link' : 'button');
         // Rule for custom add-details in search case
         if (element.dataset.gtmAddDetailsSearch) {
           const relative = document.querySelector('#' + element.dataset.gtmAddDetailsSearch) as HTMLInputElement;
@@ -244,42 +256,46 @@ const googleEvents = {
             // Fire only when input field value (after trimming) is NOT an empty string!
             return false;
           }
-          addDetails.push('search term: ' + relativeValue);
-          linkType = 'perform search';
-          linkUrl = '@perform search';
+          dataObj['add-details'].push('search term: ' + relativeValue);
+          dataObj['link-type'] = 'perform search';
+          dataObj['link-url'] = '@perform search';
         }
         break;
     }
 
-    if (linkHierarchy) {
-      addDetails.unshift('link-hierarchy: ' + linkHierarchy);
+    if (dataObj['link-hierarchy']) {
+      dataObj['add-details'].unshift('link-hierarchy: ' + dataObj['link-hierarchy']);
     }
     // Customize tagging in case drawer trigger
     if (element.dataset.gtmDrawerInverseName) {
       if (element.dataset.gtmDrawerInversed === 'true') {
-        linkLabel = element.dataset.gtmDrawerInverseName;
-        linkUrl = '@' + element.dataset.gtmDrawerInverseName;
+        dataObj['link-label'] = element.dataset.gtmDrawerInverseName;
+        dataObj['link-url'] = '@' + element.dataset.gtmDrawerInverseName;
       }
       element.dataset.gtmDrawerInversed = inverseBoolean(element?.dataset?.gtmDrawerInversed || 'false');
     }
+
+    dataObj['link-url'] = dataObj?.['link-url']?.startsWith(urlRoot)
+      ? dataObj?.['link-url']?.substr(urlRoot.length)
+      : dataObj?.['link-url']?.toLowerCase();
+    dataObj['add-details'] = dataObj['add-details'].join(' | ');
+
+    for (const key in this.attrTags) {
+      dataObj[key] = element.dataset?.[`gtm${upperCaseFirstLetter(toCamelCase(key, '-'))}`];
+    }
+
+    const retData = {} as DataGtm;
+    for (const key in this.attrMap) {
+      retData[key] = dataObj[this.attrMap[key]];
+    }
+
     // Remove all `null` params in Object before triggered Event and LowerCase all String except link-url
     return this.removeEmptyAndLowerCase({
-      action: action,
-      event: action,
-      'data-gtm': {
-        'link-type': linkType,
-        'link-label': linkLabel,
-        'link-url': linkUrl.startsWith(urlRoot) ? linkUrl.substr(urlRoot.length) : linkUrl.toLowerCase(),
-        'link-place': linkPlace,
-        restriction: restriction,
-        'document-type': element.dataset.gtmDocumentType || '',
-        'add-detail': addDetails.join(' | '),
-        cname: cname,
-        'widget-position': widgetPosition,
-        'page-area': pageArea,
-      },
-      'data-ecomm': this.gtmEcommDetail(element, { 'link-place': linkPlace }),
-    });
+      action: dataObj['action'],
+      event: dataObj['event'] || dataObj['action'],
+      data: retData,
+      ecommerce: this.gtmEcommDetail(element, { 'link-place': dataObj['link-place'] }),
+    } as gtmDataEvent);
   },
   // @ts-ignore: Unreachable code error
   callEvent: function (root: HTMLElement, data: any) {
@@ -298,16 +314,17 @@ const googleEvents = {
   dispatchEvent: function (element: HTMLElement, root: HTMLElement, customActionName?: string) {
     const self = this;
     // @ts-ignore: Unreachable code error
-    const data = this.gtmEventDetail(element, root, customActionName);
-    if (data) {
-      if (data['data-gtm']['link-type'] === 'button') {
+    const dataLayerObj = this.gtmEventDetail(element, root, customActionName);
+
+    if (dataLayerObj) {
+      if (dataLayerObj['data']?.['link-type'] === 'button') {
         setTimeout(function () {
-          self.callEvent(root, data);
+          self.callEvent(root, dataLayerObj);
         }, 500);
       } else {
-        this.callEvent(root, data);
+        this.callEvent(root, dataLayerObj);
       }
-      this.debugConsole(data);
+      this.debugConsole(dataLayerObj);
     }
   },
   onClickEvent: function (element: HTMLElement, root: HTMLElement) {
@@ -350,11 +367,11 @@ const googleEvents = {
   },
   debugConsole: function (data: any) {
     window.sessionStorage.getItem('googleEventDebug') &&
-      (console.table || console.log)(
-        Object.assign({}, data?.['data-gtm'], { action: data?.action }, data?.['data-ecomm'])
-      );
+      (console.table || console.log)(Object.assign({}, data?.['data'], { action: data?.action }, data?.['ecommerce']));
   },
-  init: function () {
+  init: function (options: ObjMap = {}) {
+    this.setAttrMapping(options.map);
+    this.setAttrTags(options.tags);
     const self = this;
     window.document.addEventListener('click', function (event) {
       const element = self.getEventTarget(event) as HTMLElement;
@@ -395,6 +412,3 @@ const googleEvents = {
     return true;
   },
 };
-
-window.googleEvents = googleEvents;
-window.googleEvents.init();

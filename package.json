@@ -2,7 +2,7 @@
   "name": "@maximusft/google-events",
   "description": "Automatic fired google events or use dataLayer",
   "private": false,
-  "version": "0.0.1",
+  "version": "0.1.0",
   "author": {
     "name": "MaximusFT"
   },
@@ -29,11 +29,17 @@
   },
   "homepage": "https://github.com/MaximusFT/google-events#readme",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
-    "preview": "vite preview"
+    "build": "rollup -c"
   },
   "devDependencies": {
+    "@rollup/plugin-commonjs": "^25.0.2",
+    "@rollup/plugin-node-resolve": "^15.1.0",
+    "rollup": "^3.26.2",
+    "rollup-plugin-copy": "^3.4.0",
+    "rollup-plugin-dts": "^5.3.0",
+    "rollup-plugin-peer-deps-external": "^2.2.4",
+    "rollup-plugin-postcss": "^4.0.2",
+    "rollup-plugin-typescript2": "^0.35.0",
     "typescript": "^5.0.2",
     "vite": "^4.4.5"
   }
