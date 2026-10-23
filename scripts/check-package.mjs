@@ -17,6 +17,11 @@ try {
   const [packed] = JSON.parse(run([npmCli, 'pack', '--ignore-scripts', '--json', '--pack-destination', taskDir], workspace));
   assert.deepEqual(packed.files.map((file) => file.path).sort(), [
     'LICENSE', 'README.md', 'CHANGELOG.md', 'docs/CONTRACT.md', 'docs/LEGACY.md', 'docs/MIGRATION.md', 'docs/RELEASE.md', 'docs/SITE_PILOT.md',
+    'docs/index.md', 'docs/getting-started.md', 'docs/DOCUMENTATION_PLAN.md',
+    'docs/integrations/README.md', 'docs/integrations/TEMPLATE.md',
+    'docs/integrations/ga4.md', 'docs/integrations/gtm.md', 'docs/integrations/umami.md',
+    'docs/integrations/plausible.md', 'docs/integrations/posthog.md', 'docs/integrations/mixpanel.md',
+    'docs/integrations/amplitude.md', 'docs/integrations/matomo.md',
     'examples/react/ProductCard.tsx', 'examples/react/main.tsx', 'package.json', 'dist/index.js', 'dist/index.js.map',
     'dist/index.cjs', 'dist/index.cjs.map', 'dist/index.d.ts', 'dist/index.d.cts',
   ].sort());
