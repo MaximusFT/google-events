@@ -2,6 +2,7 @@
 
 ## 0.3.0 — unreleased
 
+- Конфигурация и исполняемые JavaScript-примеры нескольких получателей/областей; блокирующая ambiguous-field для коллизий атрибутов одного элемента.
 - Нейтральный `createTracker`: data-track разметка, schema/events, типизация и валидация.
 - Inspect с происхождением полей, перекрытиями, границами, issues и выбором получателей.
 - Start/stop/destroy, автоматические click/change/submit и ручные track/trackElement.

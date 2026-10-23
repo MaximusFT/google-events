@@ -17,12 +17,12 @@ try {
   const [packed] = JSON.parse(run([npmCli, 'pack', '--ignore-scripts', '--json', '--pack-destination', taskDir], workspace));
   assert.deepEqual(packed.files.map((file) => file.path).sort(), [
     'LICENSE', 'README.md', 'CHANGELOG.md', 'docs/CONTRACT.md', 'docs/LEGACY.md', 'docs/MIGRATION.md', 'docs/RELEASE.md', 'docs/SITE_PILOT.md',
-    'docs/index.md', 'docs/getting-started.md', 'docs/DOCUMENTATION_PLAN.md', 'docs/ARCHITECTURE.md',
+    'docs/index.md', 'docs/getting-started.md', 'docs/DOCUMENTATION_PLAN.md', 'docs/ARCHITECTURE.md', 'docs/CONFIGURATION.md',
     'docs/integrations/README.md', 'docs/integrations/TEMPLATE.md',
     'docs/integrations/ga4.md', 'docs/integrations/gtm.md', 'docs/integrations/umami.md',
     'docs/integrations/plausible.md', 'docs/integrations/posthog.md', 'docs/integrations/mixpanel.md',
     'docs/integrations/amplitude.md', 'docs/integrations/matomo.md',
-    'examples/react/ProductCard.tsx', 'examples/react/main.tsx', 'package.json', 'dist/index.js', 'dist/index.js.map',
+    'examples/react/ProductCard.tsx', 'examples/react/main.tsx', 'examples/configuration.mjs', 'package.json', 'dist/index.js', 'dist/index.js.map',
     'dist/index.cjs', 'dist/index.cjs.map', 'dist/index.d.ts', 'dist/index.d.cts',
   ].sort());
   mkdirSync(consumer);
@@ -41,6 +41,11 @@ try {
     assert.equal(neutral.start(), false);
     assert.equal(neutral.track('smoke', { enabled: false }).properties.enabled, false);
     assert.equal(events.length, 1);
+    const { createSingleReceiverTracker } = await import('./node_modules/@maximusft/google-events/examples/configuration.mjs');
+    const exampleEvents = [];
+    const example = createSingleReceiverTracker(undefined, (event) => { exampleEvents.push(event); });
+    assert.equal(example.track('example', { product_id: 'Package', price: 0 }).properties.price, 0);
+    assert.equal(exampleEvents.length, 1);
   `);
   writeFileSync(join(consumer, 'smoke.cjs'), `
     const assert = require('node:assert/strict');

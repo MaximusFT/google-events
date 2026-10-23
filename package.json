@@ -30,6 +30,7 @@
     "docs",
     "CHANGELOG.md",
     "examples/react",
+    "examples/configuration.mjs",
     "dist/index.js",
     "dist/index.cjs",
     "dist/index.js.map",

@@ -30,10 +30,18 @@ export function collectContext(element: Element, root: Document | Element | unde
   const propertyFor = new Map(Object.entries(schema).map(([key, field]) => [field.attribute, key]));
   const traces = new Map<string, FieldTrace>();
   for (const node of scope.slice(actionIndex)) {
+    // On one element there is no nearer source: reject aliases that compete for the same key.
+    const attributesOnElement = new Map<string, string | null>();
     for (const attribute of Array.from(node.attributes)) {
       if (!attribute.name.startsWith('data-track-') || reservedAttributes.has(attribute.name)) continue;
       const key = propertyFor.get(attribute.name) ?? attribute.name.slice('data-track-'.length).replace(/-/g, '_');
       if (!validPropertyName(key)) continue;
+      const previousAttribute = attributesOnElement.get(key);
+      if (previousAttribute === undefined) attributesOnElement.set(key, attribute.name);
+      else if (previousAttribute !== null) {
+        result.issues.push({ code: 'ambiguous-field', field: key, message: `Multiple attributes map to field on the same element: ${key}`, blocking: true });
+        attributesOnElement.set(key, null);
+      }
       const source: FieldSource = { element: node, attribute: attribute.name, raw: attribute.value };
       const existing = traces.get(key);
       if (existing) existing.overridden.push(source);

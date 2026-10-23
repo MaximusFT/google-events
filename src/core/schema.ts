@@ -12,7 +12,7 @@ export interface PreparedField extends FieldDefinition { attribute: string }
 export type PreparedSchema = Record<string, PreparedField>;
 
 export interface ValidationIssue {
-  code: 'required' | 'invalid-type' | 'missing-event' | 'missing-action' | 'disabled' | 'outside-root' | 'invalid-trigger';
+  code: 'required' | 'invalid-type' | 'missing-event' | 'missing-action' | 'disabled' | 'outside-root' | 'invalid-trigger' | 'ambiguous-field';
   message: string;
   field?: string;
   blocking: boolean;
