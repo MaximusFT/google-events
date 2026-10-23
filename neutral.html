@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Нейтральный трекер событий</title>
+  <style>
+    body { max-width: 1120px; margin: 32px auto; padding: 0 20px; font: 16px/1.5 system-ui; color: #202630; }
+    section, .controls { border: 1px solid #cbd5df; border-radius: 12px; padding: 20px; margin: 20px 0; }
+    .placements, .outputs { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+    .placements > div { background: #eef3f8; padding: 18px; border-radius: 8px; }
+    button, input:not([type=checkbox]), select { padding: 9px 12px; font: inherit; }
+    button { cursor: pointer; }
+    label { display: inline-block; margin: 8px 16px 8px 0; }
+    pre { background: #17212b; color: #c9e9df; padding: 18px; border-radius: 8px; overflow: auto; max-height: 480px; font-size: 13px; }
+    svg { width: 18px; height: 18px; vertical-align: middle; }
+  </style>
+</head>
+<body>
+  <p><a href="/">Пример прежней GTM-разметки</a></p>
+  <p><a href="/react.html">Пример React в StrictMode</a></p>
+  <p><a href="/pilot.html">Локальный пилот: операции, ошибки и portal</a></p>
+  <h1>Контекст один, действия в трёх местах</h1>
+  <p>Нейтральная разметка собирает типизированное событие. Один адаптер передаёт его в dataLayer, второй получает свой формат.</p>
+  <div class="controls">
+    <label>Цена <input id="price" value="129.90" inputmode="decimal" /></label>
+    <label><input id="available" type="checkbox" checked /> В наличии</label>
+    <label><input id="disable-modal" type="checkbox" /> Отключить события блока modal</label>
+    <label><input id="fail-callback" type="checkbox" /> Имитировать ошибку callback</label>
+    <p>Можно ввести неверную цену: обязательное числовое поле заблокирует отправку и покажет причину.</p>
+  </div>
+  <section id="product" data-track-root data-track-product-id="SKU-AbC" data-track-product-name="Кроссовки City"
+           data-track-price="129.90" data-track-available="true" data-track-placement="product">
+    <h2>Кроссовки City · SKU-AbC</h2>
+    <div class="placements">
+      <div id="title-block" data-track-placement="title">
+        <p>Возле заголовка</p>
+        <button id="favorite-title" data-track-event="favorite_add">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21 2 10C-2 1 9-2 12 5 15-2 26 1 22 10Z" fill="currentColor"/></svg>
+          В избранное
+        </button>
+      </div>
+      <div id="modal-block" data-track-placement="modal">
+        <p>Блок modal</p><button id="favorite-modal" data-track-event="favorite_add">В избранное</button>
+      </div>
+      <div id="footer-block" data-track-placement="footer">
+        <p>После описания</p><button id="favorite-footer" data-track-event="favorite_add">В избранное</button>
+      </div>
+    </div>
+  </section>
+  <div class="controls">
+    <label>Проверить контекст
+      <select id="inspect-target"><option value="title">title</option><option value="modal">modal</option><option value="footer">footer</option></select>
+    </label>
+    <button id="inspect">Inspect без отправки</button>
+    <button id="success">Ручное событие favorite_added</button>
+    <button id="clear">Очистить журналы</button>
+    <p>Кнопки выше демонстрируют намерение. Ручное событие показывает API, который приложение вызывает после реального подтверждения операции.</p>
+  </div>
+  <div class="outputs">
+    <div><h2>dataLayer</h2><pre id="layer-output" aria-live="polite">[]</pre></div>
+    <div><h2>Callback</h2><pre id="custom-output" aria-live="polite">[]</pre></div>
+  </div>
+  <div class="outputs">
+    <div><h2>Inspect: данные и источники</h2><pre id="inspection" aria-live="polite">Нажмите Inspect.</pre></div>
+    <div><h2>Диагностика</h2><pre id="diagnostics" aria-live="polite">[]</pre></div>
+  </div>
+  <script type="module">
+    import { createTracker, createDataLayerReceiver, createCallbackReceiver } from '/src/index.ts';
+    const custom = [];
+    const diagnostics = [];
+    window.dataLayer = [];
+    const render = () => {
+      document.getElementById('layer-output').textContent = JSON.stringify(window.dataLayer, null, 2);
+      document.getElementById('custom-output').textContent = JSON.stringify(custom, null, 2);
+      document.getElementById('diagnostics').textContent = JSON.stringify(diagnostics, null, 2);
+    };
+    const tracker = createTracker({
+      root: document,
+      schema: {
+        product_id: { type: 'string', required: true },
+        price: { type: 'number', required: true },
+        available: 'boolean',
+      },
+      receivers: [
+        createDataLayerReceiver({ transform: (event) => ({ event: event.name, ...event.properties }) }),
+        createCallbackReceiver({
+          name: 'custom-analytics',
+          filter: (event) => event.name.startsWith('favorite_'),
+          transform: (event) => ({ type: event.name, product: event.properties.product_id, placement: event.properties.placement, price: event.properties.price, available: event.properties.available }),
+          send: (payload) => {
+            if (document.getElementById('fail-callback').checked) throw new Error('Демонстрационная ошибка callback');
+            custom.push(payload);
+          },
+        }),
+      ],
+      onError: ({ receiver, error }) => diagnostics.push({ receiver, message: String(error) }),
+      onDiagnostic: (info) => diagnostics.push(...info.issues),
+    });
+    tracker.start();
+    const product = document.getElementById('product');
+    document.getElementById('price').addEventListener('input', (event) => product.setAttribute('data-track-price', event.target.value));
+    document.getElementById('available').addEventListener('change', (event) => product.setAttribute('data-track-available', String(event.target.checked)));
+    document.getElementById('disable-modal').addEventListener('change', (event) => document.getElementById('modal-block').toggleAttribute('data-track-off', event.target.checked));
+    const describe = (element) => element ? (element.id ? '#' + element.id : element.tagName?.toLowerCase() ?? '#document') : null;
+    document.getElementById('inspect').addEventListener('click', () => {
+      const target = document.getElementById('favorite-' + document.getElementById('inspect-target').value);
+      const info = tracker.inspect(target);
+      document.getElementById('inspection').textContent = JSON.stringify({
+        event: info.event, boundary: describe(info.boundary), issues: info.issues, receivers: info.receivers,
+        fields: Object.fromEntries(Object.entries(info.fields).map(([key, trace]) => [key, {
+          raw: trace.raw, value: trace.value, element: describe(trace.element), attribute: trace.attribute,
+          overridden: trace.overridden.map((source) => ({ raw: source.raw, element: describe(source.element) })),
+        }])),
+      }, null, 2);
+    });
+    document.getElementById('success').addEventListener('click', () => {
+      const snapshot = tracker.inspect(document.getElementById('favorite-title')).event;
+      if (snapshot) tracker.track('favorite_added', snapshot.properties);
+    });
+    document.getElementById('clear').addEventListener('click', () => { window.dataLayer = []; custom.length = 0; diagnostics.length = 0; });
+    for (const type of ['click', 'change', 'input']) document.addEventListener(type, () => queueMicrotask(render));
+  </script>
+</body>
+</html>

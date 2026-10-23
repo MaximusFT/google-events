@@ -1,28 +1,94 @@
 <!doctype html>
-<html lang="en">
-
+<html lang="ru">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Google Events</title>
-  <script>var dataLayer = window.dataLayer = window.dataLayer || [];</script>
+  <title>Наследование контекста событий</title>
+  <style>
+    body { max-width: 960px; margin: 40px auto; padding: 0 20px; font: 16px/1.5 system-ui; color: #202630; }
+    section { border: 1px solid #ccc; border-radius: 12px; padding: 24px; }
+    .placements { display: flex; gap: 16px; flex-wrap: wrap; }
+    .placements > div { padding: 16px; background: #f1f4f7; border-radius: 8px; }
+    button { padding: 10px 16px; cursor: pointer; }
+    svg { width: 16px; height: 16px; vertical-align: middle; }
+    pre { background: #17212b; color: #c9e9df; padding: 20px; border-radius: 8px; overflow: auto; max-height: 500px; }
+    .deliveries { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+  </style>
 </head>
-
 <body>
-  <div id="app">
-    <div data-gtm-event="googleEvents" data-gtm-restriction="public" data-gtm-link-hierarchy-root=""
-      data-gtm-page-area="body" data-gtm-cname-root="Root CNAME">
-      Hello
-      <section data-gtm-restriction="public" data-gtm-link-hierarchy="some" data-gtm-cname="Icon Block">
-        <a href="#d1" data-gtm-component-name="Comp Newsroom">About Us</a>
-        <a href="#d2" data-gtm-trim="GTX-300" data-gtm-link-label="Newsroom" data-gtm-link-place="2">Newsroom</a>
-        <a href="#d3" data-gtm-link-label="Investors" data-gtm-link-place="3">Investors</a>
-        <a href="#d4" data-gtm-link-label="Careers" data-gtm-link-place="4">Careers</a>
-        <a href="#d5" data-gtm-link-label="Shop" data-gtm-link-place="5">Shop</a>
-      </section>
+  <p><a href="/neutral.html">Нейтральная разметка, типы полей и Inspect</a></p>
+  <h1>Один товар, три кнопки</h1>
+  <p>Данные товара заданы на секции, расположение — на блоках, действие — на кнопках. Нажмите на любую кнопку и сравните события.</p>
+  <section data-gtm-event data-ecomm-product-id="SKU-AbC" data-ecomm-product-name="Кроссовки City"
+           data-ecomm-product-sale-price="129.90" data-gtm-category="Shoes">
+    <h2>Кроссовки City — 129,90 EUR</h2>
+    <div class="placements">
+      <div data-gtm-link-place="title">
+        <p>Возле заголовка</p>
+        <button data-event="favorite_add" data-ecomm-event-name="add">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21 2 10C-2 1 9-2 12 5 15-2 26 1 22 10Z" fill="currentColor"/></svg>
+          В избранное
+        </button>
+      </div>
+      <div data-gtm-link-place="modal">
+        <p>Блок с placement = modal</p>
+        <button data-event="favorite_add" data-ecomm-event-name="add">В избранное</button>
+      </div>
+      <div data-gtm-link-place="description">
+        <p>После описания</p>
+        <button data-event="favorite_add" data-ecomm-event-name="add">В избранное</button>
+      </div>
     </div>
+    <p><label><input type="checkbox" data-gtm-link-label="Уведомлять о наличии" /> Уведомлять о наличии</label></p>
+  </section>
+  <h2>Одно действие — два получателя</h2>
+  <p>dataLayer получает исходное событие, callback — данные избранного в другом формате. Checkbox отправляется только в dataLayer.</p>
+  <p><label><input id="simulate-error" type="checkbox" /> Имитировать ошибку callback: dataLayer продолжит получать события</label></p>
+  <button id="clear">Очистить</button>
+  <div class="deliveries">
+    <div><h3>dataLayer</h3><pre id="output" aria-live="polite">Пока нет событий.</pre></div>
+    <div><h3>Callback</h3><pre id="callback-output" aria-live="polite">Пока нет событий.</pre></div>
   </div>
-  <script type="module" src="/src/main.ts"></script>
+  <h3>Ошибки получателей</h3>
+  <pre id="errors" aria-live="polite">Ошибок нет.</pre>
+  <script type="module">
+    import { createGoogleEvents, createDataLayerReceiver, createCallbackReceiver } from '/src/index.ts';
+    const callbackEvents = [];
+    const errors = [];
+    const tracker = createGoogleEvents({
+      receivers: [
+        createDataLayerReceiver(),
+        createCallbackReceiver({
+          name: 'custom-analytics',
+          filter: (event) => event.event === 'favorite_add',
+          transform: (event) => ({
+            name: event.event,
+            properties: { productId: event.ecommerce?.['product-id'], placement: event.data['link-place'] },
+          }),
+          send: (payload) => {
+            if (document.getElementById('simulate-error').checked) throw new Error('Демонстрационная ошибка callback');
+            callbackEvents.push(payload);
+          },
+        }),
+      ],
+      onError: ({ receiver, phase, error }) => {
+        errors.push({ receiver, phase, message: error instanceof Error ? error.message : String(error) });
+      },
+    });
+    tracker.init({ root: document, tags: { category: 'category' } });
+    window.dataLayer = [];
+    const output = document.getElementById('output');
+    const refresh = () => queueMicrotask(() => {
+      output.textContent = window.dataLayer.length ? JSON.stringify(window.dataLayer, null, 2) : 'Пока нет событий.';
+      document.getElementById('callback-output').textContent = callbackEvents.length ? JSON.stringify(callbackEvents, null, 2) : 'Пока нет событий.';
+      document.getElementById('errors').textContent = errors.length ? JSON.stringify(errors, null, 2) : 'Ошибок нет.';
+    });
+    for (const type of ['click', 'change', 'focusout']) document.addEventListener(type, refresh);
+    document.getElementById('clear').addEventListener('click', () => {
+      window.dataLayer = [];
+      callbackEvents.length = 0;
+      errors.length = 0;
+    });
+  </script>
 </body>
-
 </html>

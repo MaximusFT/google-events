@@ -2,7 +2,7 @@
   "compilerOptions": {
     "rootDir": "src",
     "declaration": true,
-    "declarationDir": "dist",
+    "declarationDir": "dist/types",
     "sourceMap": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,

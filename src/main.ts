@@ -1,414 +1,293 @@
-import { inverseBoolean, toCamelCase, upperCaseFirstLetter } from './utils';
+import { inverseBoolean } from './utils.js';
+import { ancestorPath, cleanData, closestValue, contextPath, eventElement, eventRoot, parentElement } from './context.js';
+import type { AnalyticsEvent } from './events.js';
+import { createDelivery, type DeliveryOptions } from './receivers.js';
 
-interface ObjMap {
-  [key: string]: any;
+export type { AnalyticsEvent } from './events.js';
+
+export interface GoogleEventsOptions extends DeliveryOptions {
+  /** Output field name -> source field name. */
+  map?: Record<string, string>;
+  /** Additional output field name -> data-gtm source field name. */
+  tags?: Record<string, string>;
+  root?: Document | Element;
+  /** Disable listeners; dispatchEvent remains available. */
+  automatic?: boolean;
 }
 
-interface DataEcommerce {
-  'event-name'?: string;
-  'product-id'?: string;
-  'product-name'?: string;
-  'product-brand'?: string;
-  'product-category'?: string;
-  'product-sale-price'?: string;
-  'product-quantity'?: string;
-  'product-discount'?: string;
-  'product-list-price'?: string;
-  'product-variant'?: string;
-  'product-position'?: string;
-  'product-coupon-code'?: string;
-  'checkout-step'?: string;
-  'payment-type'?: string;
-  'shipping-method'?: string;
-  'shipping-coupon-code'?: string;
-  'shipping-discount'?: string;
-  'shipping-total'?: string;
-  'order-coupon-code'?: string;
-  'order-subtotal'?: string;
-  'order-tax'?: string;
-  'order-total'?: string;
-  'order-discount'?: string;
-}
-
-interface DataGtm {
-  'add-details'?: string | string[];
-  'component-name'?: string;
-  'component-type'?: string;
-  'document-type'?: string;
-  'link-label'?: string;
-  'link-place'?: string;
-  'link-type'?: string;
-  'link-url'?: string;
-  'page-area'?: string;
-  restriction?: string;
-  'widget-position'?: string;
-  [key: string]: any;
-}
-
-interface gtmDataEvent {
-  action?: string;
-  event: string;
-  data: DataGtm;
-  ecommerce?: DataEcommerce;
-  [key: string]: any;
-}
-
-export const googleEvents = {
-  elementsArray: ['A', 'BUTTON'],
-  formElementsArray: ['INPUT', 'TEXTAREA', 'SELECT', 'OPTIONS'],
-  inputTypeArray: ['checkbox', 'radio'],
-  attrTags: {},
-  attrMap: {
-    'add-details': 'add-details',
-    'component-name': 'component-name',
-    'component-type': 'component-type',
-    'document-type': 'document-type',
-    'link-label': 'link-label',
-    'link-place': 'link-place',
-    'link-type': 'link-type',
-    'link-url': 'link-url',
-    'page-area': 'page-area',
-    restriction: 'restriction',
-    'widget-position': 'widget-position',
-  } as DataGtm,
-
-  setAttrMapping: function (obj: ObjMap = {}) {
-    this.attrMap = { ...this.attrMap, ...obj };
-  },
-  setAttrTags: function (obj: ObjMap = {}) {
-    this.attrTags = { ...this.attrTags, ...obj };
-    this.setAttrMapping(this.attrTags);
-  },
-  getElementTagName: function (element: HTMLElement) {
-    // try find data-gtm-element="button" or data-gtm-element="link"
-    return element.dataset.gtmElement ? element.dataset.gtmElement.toUpperCase() : element.tagName;
-  },
-  getEventTarget: function (event: Event) {
-    return event.composed ? event.composedPath()[0] : event.target;
-  },
-  getParentElement: function (element: HTMLElement) {
-    if (element.parentElement) {
-      return element.parentElement;
-    }
-    // return element.getRootNode().host;
-    return element.getRootNode();
-  },
-  dataToCamelCase: function (str: string) {
-    return str.replace(/^data-/g, '').replace(/-([a-z])/g, function (el) {
-      return el[1].toUpperCase();
-    });
-  },
-  findClosest: function (element: HTMLElement, dataAttr: string, byDefault?: string | undefined) {
-    let ret = element.dataset[this.dataToCamelCase(dataAttr)];
-    if (ret) {
-      return ret;
-    }
-    const el = element.closest('[' + dataAttr + ']');
-    if (el instanceof HTMLElement) {
-      return el.dataset[this.dataToCamelCase(dataAttr)];
-    }
-    return byDefault;
-  },
-  removeEmptyAndLowerCase: function (obj: ObjMap) {
-    const self = this;
-    return Object.keys(obj)
-      .filter(function (k) {
-        return obj[k] != null;
-      })
-      .reduce(function (acc: ObjMap, k: string) {
-        const value = obj[k];
-        if (!value) {
-          return acc;
-        }
-        if (typeof value === 'object') {
-          acc[k] = self.removeEmptyAndLowerCase(value);
-        } else {
-          acc[k] = k === 'link-url' ? value : value.toLowerCase();
-        }
-        return acc;
-      }, {});
-  },
-  disableElement: function (element: HTMLElement) {
-    element.dataset.gtmOff = 'true';
-  },
-  gtmEcommDetail: function (element: HTMLElement, dataGtm: DataGtm) {
-    const eventName = this.findClosest(element, 'data-ecomm-event-name');
-    if (!eventName) {
-      return null;
-    }
-    return {
-      // event-name: ['add', 'remove', 'product_click', 'place_order']
-      'event-name': eventName,
-      'product-id': this.findClosest(element, 'data-ecomm-product-id'),
-      'product-name': this.findClosest(element, 'data-ecomm-product-name'),
-      'product-brand': this.findClosest(element, 'data-ecomm-product-brand'),
-      'product-category': this.findClosest(element, 'data-ecomm-product-category'),
-      'product-sale-price': this.findClosest(element, 'data-ecomm-product-sale-price'),
-      'product-quantity': this.findClosest(element, 'data-ecomm-product-quantity'),
-      'product-discount': this.findClosest(element, 'data-ecomm-product-discount'),
-      'product-list-price': this.findClosest(element, 'data-ecomm-product-list-price'),
-      'product-variant': this.findClosest(element, 'data-ecomm-product-variant'),
-      'product-position': this.findClosest(element, 'data-ecomm-product-position', dataGtm['link-place']),
-      // Checkout part, even-name = 'place_order'
-      'product-coupon-code': this.findClosest(element, 'data-ecomm-product-coupon-code'),
-      'checkout-step': this.findClosest(element, 'data-ecomm-checkout-step'),
-      'payment-type': this.findClosest(element, 'data-ecomm-payment-type'),
-      'shipping-method': this.findClosest(element, 'data-ecomm-shipping-method'),
-      'shipping-coupon-code': this.findClosest(element, 'data-ecomm-shipping-coupon-code'),
-      'shipping-discount': this.findClosest(element, 'data-ecomm-shipping-discount'),
-      'shipping-total': this.findClosest(element, 'data-ecomm-shipping-total'),
-      'order-coupon-code': this.findClosest(element, 'data-ecomm-order-coupon-code'),
-      'order-subtotal': this.findClosest(element, 'data-ecomm-order-subtotal'),
-      'order-tax': this.findClosest(element, 'data-ecomm-order-tax'),
-      'order-total': this.findClosest(element, 'data-ecomm-order-total'),
-      'order-discount': this.findClosest(element, 'data-ecomm-order-discount'),
-    };
-  },
-  gtmEventDetail: function (element: HTMLInputElement, root: HTMLElement, customActionName?: string) {
-    const dataObj = {} as DataGtm;
-    if (element.dataset.gtmOff !== undefined) {
-      return false;
-    }
-    const urlRoot = document.location.protocol + '//' + document.location.host;
-    const elementTagName = this.getElementTagName(element);
-    const elementValue = element.value ? element.value.trim() : null;
-    dataObj['link-type'];
-    dataObj['link-url'];
-    dataObj['action'];
-    dataObj['add-details'] = [];
-    if (element.dataset.gtmAddDetails) {
-      dataObj['add-details'].push(element.dataset.gtmAddDetails);
-    }
-    if (element.dataset.gtmAddDetailsLabel) {
-      // Example add-details case: Label + Value
-      // total featured items: ${total number of featured items}
-      dataObj['add-details'].push(element.dataset.gtmAddDetailsLabel + ': ' + element.dataset.gtmAddDetailsValue);
-    }
-
-    dataObj['component-name'] = this.findInParents(element, root, 'data-gtm-component-name') || '';
-    dataObj['component-type'] = this.findInParents(element, root, 'data-gtm-component-type') || '';
-    dataObj['link-hierarchy'] = this.findInParents(element, root, 'data-gtm-link-hierarchy');
-    dataObj['page-area'] = this.findClosest(element, 'data-gtm-page-area', '2');
-    dataObj['restriction'] = this.findClosest(element, 'data-gtm-restriction', 'public');
-    dataObj['widget-position'] = this.findClosest(element, 'data-gtm-widget-position');
-    dataObj['link-place'] = element.dataset?.gtmLinkPlace || '1';
-    dataObj['document-type'] = element.dataset?.gtmDocumentType;
-    dataObj['event'] = element.dataset?.event;
-
-    const linkLabelPrefix = this.findClosest(element, 'data-gtm-link-label-prefix');
-    const linkLabelPure =
-      element.dataset.gtmLinkLabel || element?.textContent?.replace(/^\s+/, '')?.replace(/\s+$/, '');
-    dataObj['link-label'] = linkLabelPrefix ? linkLabelPrefix + ': ' + linkLabelPure : linkLabelPure;
-
-    switch (elementTagName) {
-      case 'INPUT':
-      case 'TEXTAREA':
-        if (element.type === 'checkbox') {
-          // except for Input-checkbox
-          dataObj.action = 'click';
-          dataObj['link-type'] = 'checkbox ' + (element.checked ? 'checked' : 'unchecked');
-          dataObj['link-url'] = '@check ' + linkLabelPure;
-          this.disableElement(element);
-          break;
-        } else if (element.type === 'radio') {
-          // except for Input-radio
-          dataObj.action = 'click';
-          dataObj['link-type'] = 'button';
-          dataObj['link-url'] = '@select ' + linkLabelPure;
-          this.disableElement(element);
-          break;
-        }
-        if (!elementValue) {
-          // Fire only when input field value (after trimming) is NOT an empty string!
-          return false;
-        }
-        dataObj.action = 'focusout';
-        dataObj['link-type'] = 'field value populated';
-        dataObj['link-url'] = '@enter ' + (element.getAttribute('name') || element.getAttribute('id') || linkLabelPure);
-        if (element.className.includes('search')) {
-          dataObj.action = customActionName || 'focusout';
-          dataObj['link-type'] = 'perform search';
-          dataObj['link-url'] = '@perform search';
-          dataObj['add-details'].push('search term: ' + elementValue);
-        } else {
-          // Disable all Inputs elements beside Search fields
-          this.disableElement(element);
-        }
-        break;
-      case 'SELECT':
-      case 'OPTIONS':
-        break;
-      case 'A':
-      case 'BUTTON':
-      default:
-        dataObj.action = 'click';
-        dataObj['link-url'] =
-          element.dataset.gtmLinkUrl ||
-          // @ts-ignore: Unreachable code error
-          (elementTagName === this.elementsArray[0] ? element?.href : '@' + linkLabelPure);
-        dataObj['link-type'] =
-          element.dataset.gtmLinkType || (elementTagName === this.elementsArray[0] ? 'link' : 'button');
-        // Rule for custom add-details in search case
-        if (element.dataset.gtmAddDetailsSearch) {
-          const relative = document.querySelector('#' + element.dataset.gtmAddDetailsSearch) as HTMLInputElement;
-          const relativeValue = relative.value ? relative.value.trim() : null;
-          if (!relativeValue) {
-            // Fire only when input field value (after trimming) is NOT an empty string!
-            return false;
-          }
-          dataObj['add-details'].push('search term: ' + relativeValue);
-          dataObj['link-type'] = 'perform search';
-          dataObj['link-url'] = '@perform search';
-        }
-        break;
-    }
-
-    if (dataObj['link-hierarchy']) {
-      dataObj['add-details'].unshift('link-hierarchy: ' + dataObj['link-hierarchy']);
-    }
-    // Customize tagging in case drawer trigger
-    if (element.dataset.gtmDrawerInverseName) {
-      if (element.dataset.gtmDrawerInversed === 'true') {
-        dataObj['link-label'] = element.dataset.gtmDrawerInverseName;
-        dataObj['link-url'] = '@' + element.dataset.gtmDrawerInverseName;
-      }
-      element.dataset.gtmDrawerInversed = inverseBoolean(element?.dataset?.gtmDrawerInversed || 'false');
-    }
-
-    dataObj['link-url'] = dataObj?.['link-url']?.startsWith(urlRoot)
-      ? dataObj?.['link-url']?.substr(urlRoot.length)
-      : dataObj?.['link-url']?.toLowerCase();
-    dataObj['add-details'] = dataObj['add-details'].join(' | ');
-
-    for (const key in this.attrTags) {
-      dataObj[key] = element.dataset?.[`gtm${upperCaseFirstLetter(toCamelCase(key, '-'))}`];
-    }
-
-    const retData = {} as DataGtm;
-    for (const key in this.attrMap) {
-      retData[key] = dataObj[this.attrMap[key]];
-    }
-
-    // Remove all `null` params in Object before triggered Event and LowerCase all String except link-url
-    return this.removeEmptyAndLowerCase({
-      action: dataObj['action'],
-      event: dataObj['event'] || dataObj['action'],
-      data: retData,
-      ecommerce: this.gtmEcommDetail(element, { 'link-place': dataObj['link-place'] }),
-    } as gtmDataEvent);
-  },
-  // @ts-ignore: Unreachable code error
-  callEvent: function (root: HTMLElement, data: any) {
-    if (!window?.dataLayer) {
-      window.dataLayer = [];
-    }
-    window.dataLayer.push(data);
-    // Fire custom Event for GTM
-    // window.document.dispatchEvent(
-    //   new CustomEvent(root.dataset.gtmEvent || 'gtmevent', {
-    //     bubbles: true,
-    //     detail: data,
-    //   })
-    // );
-  },
-  dispatchEvent: function (element: HTMLElement, root: HTMLElement, customActionName?: string) {
-    const self = this;
-    // @ts-ignore: Unreachable code error
-    const dataLayerObj = this.gtmEventDetail(element, root, customActionName);
-
-    if (dataLayerObj) {
-      if (dataLayerObj['data']?.['link-type'] === 'button') {
-        setTimeout(function () {
-          self.callEvent(root, dataLayerObj);
-        }, 500);
-      } else {
-        this.callEvent(root, dataLayerObj);
-      }
-      this.debugConsole(dataLayerObj);
-    }
-  },
-  onClickEvent: function (element: HTMLElement, root: HTMLElement) {
-    while (element && element !== root) {
-      if (
-        this.elementsArray.includes(this.getElementTagName(element)) ||
-        this.inputTypeArray.includes((element as HTMLInputElement).type)
-      ) {
-        this.dispatchEvent(element, root);
-        break;
-      }
-      // @ts-ignore: Unreachable code error
-      element = this.getParentElement(element);
-    }
-  },
-  findInParents: function (element: HTMLElement, root: HTMLElement, attribute: string) {
-    let elem = element;
-    let rootReached = false;
-    const ret = [];
-    const rootAttribute = attribute + '-root';
-    while (elem) {
-      if (elem.getAttribute(attribute)) {
-        ret.unshift(elem.getAttribute(attribute));
-      }
-      if (elem.getAttribute(rootAttribute)) {
-        ret.unshift(elem.getAttribute(rootAttribute));
-        break;
-      }
-      const parent = this.getParentElement(elem);
-      if (!parent || rootReached) {
-        break;
-      }
-      if (parent === root) {
-        rootReached = true;
-      }
-      // @ts-ignore: Unreachable code error
-      elem = parent;
-    }
-    return ret.length ? ret.join(' > ') : '';
-  },
-  debugConsole: function (data: any) {
-    window.sessionStorage.getItem('googleEventDebug') &&
-      (console.table || console.log)(Object.assign({}, data?.['data'], { action: data?.action }, data?.['ecommerce']));
-  },
-  init: function (options: ObjMap = {}) {
-    this.setAttrMapping(options.map);
-    this.setAttrTags(options.tags);
-    const self = this;
-    window.document.addEventListener('click', function (event) {
-      const element = self.getEventTarget(event) as HTMLElement;
-      const root = element?.closest?.('[data-gtm-event]');
-      if (root instanceof HTMLElement) {
-        self.onClickEvent(element, root);
-      }
-    });
-    // In case when user press Enter key and triggered some redirection to other page then `keyup` can be not triggered
-    window.document.addEventListener('keydown', function (event) {
-      /**
-       * To defined that input has Search functionality must use any combination word "search" in className
-       * Example: 'search', 'header-search', 'any-class-with-word-search'
-       */
-      const element = self.getEventTarget(event) as HTMLElement;
-      const root = element.closest('[data-gtm-event]');
-      if (
-        root instanceof HTMLElement &&
-        self.formElementsArray.includes(element.tagName) &&
-        element.className &&
-        element.className.includes('search') &&
-        event.key === 'Enter'
-      ) {
-        self.dispatchEvent(element, root, 'keypress');
-      }
-    });
-    window.document.addEventListener('focusout', function (event) {
-      const element = self.getEventTarget(event) as HTMLElement;
-      const root = element.closest('[data-gtm-event]');
-      if (
-        root instanceof HTMLElement &&
-        self.formElementsArray.includes(element.tagName) &&
-        !self.inputTypeArray.includes((element as HTMLInputElement).type)
-      ) {
-        self.dispatchEvent(element, root);
-      }
-    });
-    return true;
-  },
+const defaultMap: Record<string, string> = {
+  'add-details': 'add-details',
+  'component-name': 'component-name',
+  'component-type': 'component-type',
+  'document-type': 'document-type',
+  'link-label': 'link-label',
+  'link-place': 'link-place',
+  'link-type': 'link-type',
+  'link-url': 'link-url',
+  'page-area': 'page-area',
+  restriction: 'restriction',
+  'widget-position': 'widget-position',
 };
+
+const ecommerceFields = [
+  'product-id', 'product-name', 'product-brand', 'product-category', 'product-sale-price',
+  'product-quantity', 'product-discount', 'product-list-price', 'product-variant',
+  'product-position', 'product-coupon-code', 'checkout-step', 'payment-type',
+  'shipping-method', 'shipping-coupon-code', 'shipping-discount', 'shipping-total',
+  'order-coupon-code', 'order-subtotal', 'order-tax', 'order-total', 'order-discount',
+];
+
+export function createGoogleEvents(options: DeliveryOptions = {}) {
+  let removeListeners: (() => void) | undefined;
+  const delivery = createDelivery(options);
+
+  return {
+    elementsArray: ['A', 'BUTTON'],
+    formElementsArray: ['INPUT', 'TEXTAREA', 'SELECT'],
+    inputTypeArray: ['checkbox', 'radio'],
+    attrTags: {} as Record<string, string>,
+    attrMap: { ...defaultMap },
+
+    setAttrMapping(obj: Record<string, string> = {}) {
+      this.attrMap = { ...this.attrMap, ...obj };
+    },
+    setAttrTags(obj: Record<string, string> = {}) {
+      this.attrTags = { ...this.attrTags, ...obj };
+      this.setAttrMapping(obj);
+    },
+    getElementTagName(element: Element) {
+      return element.getAttribute('data-gtm-element')?.toUpperCase() || element.tagName.toUpperCase();
+    },
+    getEventTarget: eventElement,
+    getParentElement: parentElement,
+    dataToCamelCase(str: string) {
+      return str.replace(/^data-/, '').replace(/-([a-z])/g, (_, letter: string) => letter.toUpperCase());
+    },
+    findClosest(element: Element, attribute: string, fallback?: string, root?: Element) {
+      return closestValue(contextPath(element, root), attribute, fallback);
+    },
+    /** @deprecated Historical name; values are now preserved without lowercasing. */
+    removeEmptyAndLowerCase: cleanData,
+    disableElement(element: Element) {
+      element.setAttribute('data-gtm-off', 'true');
+    },
+    findInParents(element: Element, root: Element, attribute: string) {
+      const values: string[] = [];
+      for (const node of contextPath(element, root)) {
+        const value = node.getAttribute(attribute);
+        if (value) values.unshift(value);
+        if (node.hasAttribute(attribute + '-root')) {
+          const rootValue = node.getAttribute(attribute + '-root');
+          if (rootValue) values.unshift(rootValue);
+          break;
+        }
+      }
+      return values.join(' > ');
+    },
+    gtmEcommDetail(element: Element, data: Record<string, string | undefined>, root?: Element) {
+      const path = contextPath(element, root);
+      const eventName = closestValue(path, 'data-ecomm-event-name');
+      if (!eventName) return undefined;
+      const result: Record<string, string | undefined> = { 'event-name': eventName };
+      for (const field of ecommerceFields) {
+        result[field] = closestValue(path, 'data-ecomm-' + field);
+      }
+      result['product-position'] ??= data['link-place'];
+      return result;
+    },
+    gtmEventDetail(element: Element, root: Element, customActionName?: string): AnalyticsEvent | false {
+      const path = contextPath(element, root);
+      if (!path.length || path.some((node) => node.hasAttribute('data-gtm-off'))) return false;
+      const read = (name: string, fallback?: string) => closestValue(path, 'data-gtm-' + name, fallback);
+      const data: Record<string, string | undefined> = {};
+      const details: string[] = [];
+      const extra = read('add-details');
+      if (extra) details.push(extra);
+      const extraLabel = read('add-details-label');
+      if (extraLabel) details.push(extraLabel + ': ' + (read('add-details-value') ?? ''));
+
+      data['component-name'] = this.findInParents(element, root, 'data-gtm-component-name');
+      data['component-type'] = this.findInParents(element, root, 'data-gtm-component-type');
+      data['link-hierarchy'] = this.findInParents(element, root, 'data-gtm-link-hierarchy');
+      data['page-area'] = read('page-area', '2');
+      data.restriction = read('restriction', 'public');
+      data['widget-position'] = read('widget-position');
+      data['link-place'] = read('link-place', '1');
+      data['document-type'] = read('document-type');
+
+      const label = read('link-label') ?? element.textContent?.trim() ?? '';
+      const prefix = read('link-label-prefix');
+      data['link-label'] = prefix ? prefix + ': ' + label : label;
+      const tag = this.getElementTagName(element);
+      const input = element as HTMLInputElement;
+      let action = 'click';
+      if (tag === 'INPUT' || tag === 'TEXTAREA') {
+        if (input.type === 'checkbox') {
+          data['link-type'] = 'checkbox ' + (input.checked ? 'checked' : 'unchecked');
+          data['link-url'] = '@check ' + label;
+        } else if (input.type === 'radio') {
+          data['link-type'] = 'button';
+          data['link-url'] = '@select ' + label;
+        } else {
+          const value = input.value?.trim();
+          if (!value) return false;
+          action = 'focusout';
+          data['link-type'] = 'field value populated';
+          data['link-url'] = '@enter ' + (element.getAttribute('name') || element.id || label);
+          if (element.getAttribute('class')?.includes('search')) {
+            action = customActionName || 'focusout';
+            data['link-type'] = 'perform search';
+            data['link-url'] = '@perform search';
+            details.push('search term: ' + value);
+          }
+        }
+      } else if (tag === 'SELECT') {
+        action = 'change';
+        data['link-type'] = 'select';
+        data['link-url'] = '@select ' + label;
+      } else {
+        data['link-url'] = read('link-url') || (tag === 'A' ? (element as HTMLAnchorElement).href : '@' + label);
+        data['link-type'] = read('link-type') || (tag === 'A' ? 'link' : 'button');
+        const searchId = element.getAttribute('data-gtm-add-details-search');
+        if (searchId) {
+          const relative = element.ownerDocument.getElementById(searchId);
+          const value = relative && 'value' in relative && typeof relative.value === 'string'
+            ? relative.value.trim() : '';
+          if (!value) return false;
+          details.push('search term: ' + value);
+          data['link-type'] = 'perform search';
+          data['link-url'] = '@perform search';
+        }
+      }
+      if (data['link-hierarchy']) details.unshift('link-hierarchy: ' + data['link-hierarchy']);
+      // Legacy drawer behavior is retained until the event contract is migrated.
+      const inverseName = element.getAttribute('data-gtm-drawer-inverse-name');
+      if (inverseName) {
+        if (element.getAttribute('data-gtm-drawer-inversed') === 'true') {
+          data['link-label'] = inverseName;
+          data['link-url'] = '@' + inverseName;
+        }
+        element.setAttribute('data-gtm-drawer-inversed', inverseBoolean(element.getAttribute('data-gtm-drawer-inversed') || 'false'));
+      }
+      const url = data['link-url'];
+      if (url && tag === 'A') {
+        const location = element.ownerDocument.location;
+        try {
+          const parsed = new URL(url, location.href);
+          if (parsed.origin === location.origin) data['link-url'] = parsed.pathname + parsed.search + parsed.hash;
+        } catch {
+          // Keep custom non-URL labels untouched.
+        }
+      }
+      data['add-details'] = details.join(' | ');
+      for (const source of Object.values(this.attrTags)) {
+        data[source] = read(source);
+      }
+      const mapped: Record<string, string | undefined> = {};
+      for (const [output, source] of Object.entries(this.attrMap)) {
+        mapped[output] = data[source];
+      }
+      return cleanData({
+        action,
+        // data-gtm-event remains a scope marker for compatibility; data-event names the action.
+        event: element.getAttribute('data-event') || action,
+        data: mapped,
+        ecommerce: this.gtmEcommDetail(element, data, root),
+      });
+    },
+    callEvent(root: Element, data: AnalyticsEvent) {
+      return delivery.dispatch(data, { document: root.ownerDocument });
+    },
+    /** Resolve after all currently pending receiver sends have settled. */
+    flush() {
+      return delivery.flush();
+    },
+    dispatchEvent(element: Element, root: Element, customActionName?: string) {
+      const data = this.gtmEventDetail(element, root, customActionName);
+      if (!data) return false;
+      this.callEvent(root, data);
+      this.debugConsole(data, element.ownerDocument);
+      return data;
+    },
+    onClickEvent(element: Element, root: Element) {
+      for (const node of contextPath(element, root)) {
+        if (this.elementsArray.includes(this.getElementTagName(node)) ||
+            this.inputTypeArray.includes((node as HTMLInputElement).type)) {
+          return this.dispatchEvent(node, root);
+        }
+      }
+      return false;
+    },
+    debugConsole(data: AnalyticsEvent, doc?: Document) {
+      const view = (doc ?? (typeof document !== 'undefined' ? document : undefined))?.defaultView;
+      try {
+        if (view?.sessionStorage.getItem('googleEventDebug')) {
+          console.table({ ...data.data, action: data.action, ...data.ecommerce });
+        }
+      } catch {
+        // Storage may be unavailable; diagnostics must not break event delivery.
+      }
+    },
+    destroy() {
+      removeListeners?.();
+      removeListeners = undefined;
+    },
+    init(options: GoogleEventsOptions = {}) {
+      delivery.configure(options);
+      this.destroy();
+      this.setAttrMapping(options.map);
+      this.setAttrTags(options.tags);
+      const scope = options.root ?? (typeof document !== 'undefined' ? document : undefined);
+      if (!scope) return false;
+      if (options.automatic === false) return true;
+
+      const resolve = (event: Event) => {
+        const element = eventElement(event);
+        if (!element) return undefined;
+        const path = ancestorPath(element);
+        // Bound all context to the configured element, even when the marked root is outside it.
+        const boundIndex = scope.nodeType === 1 ? path.indexOf(scope as Element) : path.length - 1;
+        if (boundIndex < 0 || (scope.nodeType === 9 && element.ownerDocument !== scope)) return undefined;
+        const bounded = path.slice(0, boundIndex + 1);
+        const root = bounded.find((node) => node.hasAttribute('data-gtm-event'));
+        return root ? { element, root } : undefined;
+      };
+      const click = (event: Event) => {
+        const found = resolve(event);
+        if (found) this.onClickEvent(found.element, found.root);
+      };
+      const keydown = (event: Event) => {
+        const found = resolve(event);
+        if (found && (event as KeyboardEvent).key === 'Enter' && !(event as KeyboardEvent).repeat &&
+            this.formElementsArray.includes(found.element.tagName) &&
+            found.element.getAttribute('class')?.includes('search')) {
+          this.dispatchEvent(found.element, found.root, 'keypress');
+        }
+      };
+      const focusout = (event: Event) => {
+        const found = resolve(event);
+        if (found && ['INPUT', 'TEXTAREA'].includes(found.element.tagName) &&
+            !this.inputTypeArray.includes((found.element as HTMLInputElement).type)) {
+          this.dispatchEvent(found.element, found.root);
+        }
+      };
+      const change = (event: Event) => {
+        const found = resolve(event);
+        if (found && found.element.tagName === 'SELECT') this.dispatchEvent(found.element, found.root);
+      };
+      const listeners: [string, EventListener][] = [['click', click], ['keydown', keydown], ['focusout', focusout], ['change', change]];
+      for (const [type, handler] of listeners) scope.addEventListener(type, handler);
+      removeListeners = () => {
+        for (const [type, handler] of listeners) scope.removeEventListener(type, handler);
+      };
+      return true;
+    },
+    /** Convenience manual dispatch with automatic root lookup. */
+    trackElement(element: Element, customActionName?: string) {
+      const root = eventRoot(element);
+      return root ? this.dispatchEvent(element, root, customActionName) : false;
+    },
+  };
+}
+
+export const googleEvents = createGoogleEvents();
