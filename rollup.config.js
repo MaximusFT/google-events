@@ -9,6 +9,10 @@ export default [{
   ],
   plugins: [typescript({ useTsconfigDeclarationDir: true })],
 }, {
+  input: 'src/browser.ts',
+  output: { file: 'dist/track-events.global.js', format: 'iife', name: 'TrackEvents', sourcemap: true },
+  plugins: [typescript({ useTsconfigDeclarationDir: true })],
+}, {
   input: 'dist/types/index.d.ts',
   output: [
     { file: 'dist/index.d.ts', format: 'esm' },

@@ -1,0 +1,101 @@
+{
+  "measuredAt": "2026-10-24T08:47:43.750Z",
+  "packageVersion": "0.3.0",
+  "node": "v20.19.5",
+  "browser": "155.0.4283.62",
+  "os": "win32 10.0.26200 x64",
+  "cpu": "11th Gen Intel(R) Core(TM) i7-11850H @ 2.50GHz",
+  "method": "Headless browser, trackElement(), receivers: [], no listeners/network; root + depth-1 divs, then action; price=0 at root, placement repeated every 4 levels; unminified bundles, gzip level 9, source maps excluded.",
+  "artifacts": [
+    {
+      "name": "index.js",
+      "bytes": 54246,
+      "gzipBytes": 12990,
+      "sha256": "ddcb491f448496cc891d32bf704f1d35582170d513d02cfc86b983d719fc22e6"
+    },
+    {
+      "name": "index.cjs",
+      "bytes": 54551,
+      "gzipBytes": 13063,
+      "sha256": "a9e78ff4e73cd43f5729ac2e8f70d5c5629ab9a52bd425e206fde52c7f7eb5ea"
+    },
+    {
+      "name": "track-events.global.js",
+      "bytes": 39323,
+      "gzipBytes": 9502,
+      "sha256": "d88f5ffa89db29cddda17f4ce82094244f455e7afbf55d3a23eac9bb288e142f"
+    }
+  ],
+  "samples": [
+    {
+      "ancestorElements": 12,
+      "warmup": 200,
+      "batches": 25,
+      "iterations": 200,
+      "medianMillisecondsPerCall": 0.020500001907348634,
+      "p95BatchMeanMillisecondsPerCall": 0.026500000953674316,
+      "batchMilliseconds": [
+        4.599999904632568,
+        4.099999904632568,
+        4,
+        4.599999904632568,
+        3.8000001907348633,
+        5,
+        3.8000001907348633,
+        5.099999904632568,
+        5.099999904632568,
+        5.300000190734863,
+        4.399999618530273,
+        5.5,
+        4.900000095367432,
+        3.5999999046325684,
+        4.100000381469727,
+        4.699999809265137,
+        3.8000001907348633,
+        4.799999713897705,
+        3.9000000953674316,
+        4.699999809265137,
+        3.8000001907348633,
+        3.8000001907348633,
+        2.6999998092651367,
+        2.9000000953674316,
+        3.1999998092651367
+      ]
+    },
+    {
+      "ancestorElements": 256,
+      "warmup": 200,
+      "batches": 25,
+      "iterations": 200,
+      "medianMillisecondsPerCall": 0.1625,
+      "p95BatchMeanMillisecondsPerCall": 0.23449999809265137,
+      "batchMilliseconds": [
+        41.69999980926514,
+        38.90000009536743,
+        40.69999980926514,
+        40.700000286102295,
+        36,
+        39.09999990463257,
+        37.299999713897705,
+        41.30000019073486,
+        49.30000019073486,
+        46.89999961853027,
+        40.80000019073486,
+        32.5,
+        28.699999809265137,
+        29.300000190734863,
+        29.700000286102295,
+        30.5,
+        28.5,
+        32.59999990463257,
+        28.09999990463257,
+        29.199999809265137,
+        29.5,
+        29.90000009536743,
+        31.200000286102295,
+        28.399999618530273,
+        30.5
+      ]
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="ru">
+<meta charset="utf-8">
+<title>TrackEvents: браузерный ESM</title>
+<section id="shop" data-track-root data-track-product-id="SKU-AbC" data-track-price="0">
+  <button data-track-event="favorite_requested">В избранное</button>
+  <div id="dynamic"></div>
+</section>
+<button id="add">Добавить динамическую кнопку</button>
+<button id="stop">Остановить</button>
+<button id="start">Запустить</button>
+<pre id="events" aria-live="polite"></pre>
+<script type="module" src="./module.js"></script>
+</html>
