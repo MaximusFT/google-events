@@ -47,4 +47,15 @@ npm run docs:check
 
 При выборе GitHub Pages задайте base по фактическому адресу: `/` для корня домена или `/<repository>/` для project site. Перенос репозитория требует нового base и пересборки, без правок исходных руководств. Содержимое website/.vitepress/dist можно разместить на другом статическом хосте с тем же base.
 
-Публикацию выполняет отдельный workflow с Pages environment и разрешениями pages/id-token; его запуск и настройка Pages остаются следующим действием. Сейчас права на публикацию не добавлены. После реального развёртывания нужно проверить прямые ссылки, поиск, assets и playground на опубликованном URL, затем заменить статус локальной приёмки. Официальные инструкции: [VitePress deploy и base](https://vitepress.dev/guide/deploy).
+Публикацию выполняет отдельный workflow `Publish documentation` (pages.yml): push в main или ручной workflow_dispatch на default branch. Сначала проходят проверки библиотеки/пакета и документации, затем configure-pages получает base_path из настроек Pages и выполняется отдельная сборка для этого адреса. Права pages:write/id-token:write есть только у deploy job с environment github-pages; PR не запускает развёртывание. Параллельные публикации выполняются по очереди.
+
+В настройках репозитория должен быть выбран Pages → Source → GitHub Actions; включение Pages требует прав владельца/администратора. Workflow не меняет источник публикации и custom domain самостоятельно. После загрузки артефакта deploy-pages возвращает фактический page_url; verify job проверяет прямые ссылки, поиск, mobile menu, исходники и playground именно на нём. Официальные инструкции: [GitHub Pages custom workflows](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages), [VitePress deploy и base](https://vitepress.dev/guide/deploy).
+
+Повторная проверка опубликованного адреса в PowerShell:
+
+```powershell
+$env:DOCS_URL = 'https://your-host/your-project/'
+npx playwright test --config playwright.docs.config.mjs
+```
+
+В этом режиме локальный сервер не запускается. До успешного deploy и проверки фактического публичного URL статус публикации не считается подтверждённым.

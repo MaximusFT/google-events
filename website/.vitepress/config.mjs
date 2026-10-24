@@ -31,6 +31,6 @@ export default defineConfig({
     outline: { level: [2, 3], label: 'На этой странице' },
     docFooter: { prev: 'Предыдущая', next: 'Следующая' },
     sidebarMenuLabel: 'Разделы', returnToTopLabel: 'Наверх', darkModeSwitchLabel: 'Тема',
-    footer: { message: 'Кандидат API 0.3.0 · Пакет и сайт ещё не опубликованы. SDK-контракты проверены локально; доставка в реальные панели — отдельный этап.' },
+    footer: { message: `Кандидат API ${version} · Пакет ещё не опубликован. SDK-контракты проверены локально; доставка в реальные панели — отдельный этап.` },
   },
 });

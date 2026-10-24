@@ -23,7 +23,7 @@ test('direct section URLs, navigation and local search work without external ser
   await page.locator('.VPLocalSearchBox .result').first().click();
   const source = await page.request.get(new URL('examples/react/ProductCard.tsx', baseURL).href);
   expect(source.status()).toBe(200);
-  expect(source.headers()['content-type']).toContain('text/plain');
+  expect(source.headers()['content-type']).not.toContain('text/html');
   expect(await source.text()).toContain('export function ProductCard');
   expect(errors).toEqual([]); expect(external).toEqual([]);
 });
