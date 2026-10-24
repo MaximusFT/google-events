@@ -1,6 +1,12 @@
 export { googleEvents as default, googleEvents, createGoogleEvents } from './main.js';
 export type { AnalyticsEvent, GoogleEventsOptions } from './main.js';
 export { createCallbackReceiver, createDataLayerReceiver } from './receivers.js';
+export { createGa4Receiver } from './adapters/ga4.js';
+export type { Ga4Client, Ga4Payload, Ga4ReceiverOptions } from './adapters/ga4.js';
+export { createUmamiReceiver } from './adapters/umami.js';
+export type { UmamiClient, UmamiPayload, UmamiReceiverOptions } from './adapters/umami.js';
+export { createGtmReceiver } from './adapters/gtm.js';
+export type { GtmPayload, GtmReceiverOptions } from './adapters/gtm.js';
 export type { EventReceiver, EventFilter, ReceiverContext, DeliveryOptions, DeliveryError, DeliveryErrorHandler, DataLayerReceiverOptions } from './receivers.js';
 export { createTracker } from './tracker.js';
 export type { TrackerOptions, TrackInspection, FieldSource, FieldTrace, TrackElementOptions, ManualTrackOptions } from './tracker.js';

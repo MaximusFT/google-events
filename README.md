@@ -152,6 +152,8 @@ await tracker.flush();
 
 ## Получатели
 
+Готовы отдельные `createGa4Receiver`, `createGtmReceiver` и `createUmamiReceiver` с передаваемыми клиентами: [настройки, mapping и ограничения](docs/ADAPTERS.md). Локальные тесты используют подставные SDK; реальный приём в панелях ещё предстоит подтвердить.
+
 Получатель реализует `EventReceiver<TrackEvent>`: `{ name, filter?, send(event, context) }`. Имена должны быть непустыми и уникальными. Filter синхронно возвращает boolean, send возвращает void либо Promise<void>. Callback-адаптер дополнительно поддерживает синхронный transform в любую схему:
 
 ```ts

@@ -29,6 +29,10 @@ delivery/types.ts          контракты доставки и preview
 delivery/dispatcher.ts     маршрутизация, ошибки и flush
 adapters/callback.ts       transform/send переданного callback
 adapters/data-layer.ts     окно документа и существующая очередь
+adapters/ga4.ts            явная цель gtag и mapping параметров
+adapters/gtm.ts            отдельный GTM-envelope поверх dataLayer
+adapters/umami.ts          инъекция Umami-клиента и плоские data
+adapters/payload.ts        общие проверки оболочки SDK-события
 debug/inspection.ts        публичный inspect и изоляция onDiagnostic
 legacy/google-events.ts    совместимая фабрика и singleton
 legacy/context.ts          исторические границы GTM
@@ -53,4 +57,4 @@ DOM-модуль возвращает collection без receivers. Публич�
 
 JSDoc/TSDoc объясняет публичные lifecycle-методы, filter/transform/send, границы ошибок и значение flush. Комментарии не заменяют [контракт](CONTRACT.md).
 
-Новые сервисы добавляются отдельными модулями adapters после этапа конфигурации. Их SDK-клиенты передаёт приложение; ради нового сервиса не нужно менять DOM-коллектор или dispatcher. [Правила конфигурации и mapping](CONFIGURATION.md) используют schema/filter/transform. Поддержка allowlist, SDK readiness и отмены отправок остаётся отдельной работой.
+GA4/GTM/Umami добавлены отдельными модулями adapters, без изменения DOM-коллектора или dispatcher. Их SDK-клиенты передаёт приложение через getClient; SDK readiness не реализуется скрытым таймером ядра. [Правила конфигурации и mapping](CONFIGURATION.md) используют schema/filter/transform. Поддержка allowlist, дополнительных политик readiness и отмены отправок остаётся отдельной работой.

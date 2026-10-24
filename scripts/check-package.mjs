@@ -17,7 +17,7 @@ try {
   const [packed] = JSON.parse(run([npmCli, 'pack', '--ignore-scripts', '--json', '--pack-destination', taskDir], workspace));
   assert.deepEqual(packed.files.map((file) => file.path).sort(), [
     'LICENSE', 'README.md', 'CHANGELOG.md', 'docs/CONTRACT.md', 'docs/LEGACY.md', 'docs/MIGRATION.md', 'docs/RELEASE.md', 'docs/SITE_PILOT.md',
-    'docs/index.md', 'docs/getting-started.md', 'docs/DOCUMENTATION_PLAN.md', 'docs/ARCHITECTURE.md', 'docs/CONFIGURATION.md',
+    'docs/index.md', 'docs/getting-started.md', 'docs/DOCUMENTATION_PLAN.md', 'docs/ARCHITECTURE.md', 'docs/CONFIGURATION.md', 'docs/ADAPTERS.md',
     'docs/integrations/README.md', 'docs/integrations/TEMPLATE.md',
     'docs/integrations/ga4.md', 'docs/integrations/gtm.md', 'docs/integrations/umami.md',
     'docs/integrations/plausible.md', 'docs/integrations/posthog.md', 'docs/integrations/mixpanel.md',
@@ -46,6 +46,17 @@ try {
     const example = createSingleReceiverTracker(undefined, (event) => { exampleEvents.push(event); });
     assert.equal(example.track('example', { product_id: 'Package', price: 0 }).properties.price, 0);
     assert.equal(exampleEvents.length, 1);
+    const { createGa4Receiver, createUmamiReceiver, createGtmReceiver } = await import('@maximusft/google-events');
+    const providerCalls = [];
+    const providers = createTracker({ receivers: [
+      createGa4Receiver({ measurementId: 'G-PACKAGE', getClient: () => (...args) => { providerCalls.push(args); } }),
+      createUmamiReceiver({ getClient: () => ({ track: (...args) => { providerCalls.push(args); } }) }),
+    ] });
+    providers.track('package_event', { enabled: false });
+    await providers.flush();
+    assert.equal(providerCalls[0][2].send_to, 'G-PACKAGE');
+    assert.equal(providerCalls[1][1].enabled, false);
+    assert.equal(createGtmReceiver().name, 'gtm');
   `);
   writeFileSync(join(consumer, 'smoke.cjs'), `
     const assert = require('node:assert/strict');
@@ -59,12 +70,15 @@ try {
     assert.equal(neutral.start(), false);
     assert.equal(neutral.track('smoke', { enabled: false }).properties.enabled, false);
     assert.equal(events.length, 1);
+    assert.equal(typeof require('@maximusft/google-events').createGa4Receiver, 'function');
+    assert.equal(typeof require('@maximusft/google-events').createUmamiReceiver, 'function');
+    assert.equal(typeof require('@maximusft/google-events').createGtmReceiver, 'function');
   `);
   run([join(consumer, 'smoke.mjs')], consumer);
   run([join(consumer, 'smoke.cjs')], consumer);
 
   const typeExample = `
-    import tracker, { createGoogleEvents, createTracker, createCallbackReceiver, createDataLayerReceiver, type AnalyticsEvent, type TrackEvent, type TrackInspection } from '@maximusft/google-events';
+    import tracker, { createGoogleEvents, createTracker, createCallbackReceiver, createDataLayerReceiver, createGa4Receiver, createGtmReceiver, createUmamiReceiver, type AnalyticsEvent, type TrackEvent, type TrackInspection } from '@maximusft/google-events';
     tracker.init({ automatic: false });
     const instance = createGoogleEvents();
     const result: AnalyticsEvent | false = instance.trackElement(document.createElement('button'));
@@ -84,6 +98,15 @@ try {
     const inspection: TrackInspection = neutral.inspect(document.createElement('button'));
     const neutralEvent: TrackEvent | false = neutral.track('buy', { price: 0 });
     void inspection; void neutralEvent;
+    createTracker({ receivers: [
+      createGa4Receiver({ measurementId: 'G-TYPES', getClient: () => (_command, _name, params) => { const id: unknown = params.send_to; void id; } }),
+      createUmamiReceiver({ getClient: () => ({ track(name, data) { const value: string | number | boolean = data.enabled; console.log(name, value); } }) }),
+      createGtmReceiver({ transform: event => ({ event: event.name, nested: { value: 0 } }) }),
+    ] });
+    // @ts-expect-error A GA4 destination is mandatory.
+    createGa4Receiver({ getClient: () => undefined });
+    // @ts-expect-error An Umami client must have track().
+    createUmamiReceiver({ getClient: () => ({ send() {} }) });
     // @ts-expect-error A legacy receiver cannot consume the neutral contract.
     createTracker({ receivers: [createCallbackReceiver<AnalyticsEvent>({ name: 'wrong', send() {} })] });
   `;
