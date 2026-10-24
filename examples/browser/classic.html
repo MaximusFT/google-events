@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="ru">
+<meta charset="utf-8">
+<title>TrackEvents: обычный script</title>
+<section id="shop" data-track-root data-track-product-id="SKU-AbC" data-track-price="0">
+  <button data-track-event="favorite_requested">В избранное</button>
+  <div id="dynamic"></div>
+</section>
+<button id="add">Добавить динамическую кнопку</button>
+<button id="stop">Остановить</button>
+<button id="start">Запустить</button>
+<pre id="events" aria-live="polite"></pre>
+<!-- Copy dist beside these examples, preserving the relative directory layout. -->
+<script src="../../dist/track-events.global.js"></script>
+<script src="./classic.js"></script>
+</html>

@@ -1,5 +1,15 @@
 # DOM-события с наследованием контекста
 
+Следующий цикл развития — [план универсальных интеграций и онлайн-документации](ROADMAP.md).
+
+Правила нейтрального API: [контракт событий, наследование и точные примеры](docs/CONTRACT.md).
+
+[Документация](docs/index.md) · [Первое событие](docs/getting-started.md) · [Исследование интеграций](docs/integrations/README.md).
+
+Сайт документации с поиском и playground доступен локально: `npm run docs:build`, затем `npm run docs:preview`. [Сборка и проверка переноса в подпуть](docs/WEBSITE.md). Публичная публикация ещё не выполнена.
+
+Для обычного сайта без сборщика: [script с глобальным TrackEvents или браузерный ESM](docs/CONNECTIONS.md). [Размеры и воспроизводимые замеры](docs/PERFORMANCE.md).
+
 Пакет `@maximusft/google-events`: контекст товара задаётся на карточке, расположение — на вложенном блоке, действие — на кнопке. Библиотека собирает типизированное событие и передаёт его подключённым получателям. Она работает с DOM и не зависит от React, Angular или Vue.
 
 Версия 0.3.0 подготовлена локально; публикация и внешний пилот ещё не проводились. Историческое имя пакета сохранено. Старый API доступен отдельно: [legacy-режим](docs/LEGACY.md).
@@ -146,7 +156,9 @@ await tracker.flush();
 
 ## Получатели
 
-Получатель реализует `EventReceiver<TrackEvent>`: `{ name, filter?, send(event, context) }`. Имена должны быть непустыми и уникальными. Filter синхронно возвращает boolean, send возвращает void либо Promise<void>. Callback-адаптер дополнительно поддерживает синхронный transform в любую схему:
+Готовы отдельные `createGa4Receiver`, `createGtmReceiver` и `createUmamiReceiver` с передаваемыми клиентами: [настройки, mapping и ограничения](docs/ADAPTERS.md). Локальные тесты используют подставные SDK; реальный приём в панелях ещё предстоит подтвердить.
+
+Получатель реализует `EventReceiver<TrackEvent>`: `{ name, filter?, send(event, context) }`. Имена должны быть непустыми и уникальными. Filter синхронно возвращает boolean, send возвращает void либо `Promise<void>`. Callback-адаптер дополнительно поддерживает синхронный transform в любую схему:
 
 ```ts
 const receiver = createCallbackReceiver({
@@ -185,10 +197,13 @@ npm run dev
 ```sh
 npm run check        # Типы, алгоритм/DOM, установленный пакет.
 npm run test:browser # Реальный браузер и демо.
+npm run test:angular # Установка tarball в Angular, production AOT и Router/lifecycle в браузере.
 npm run check:all    # Всё вместе.
 ```
 
 На Windows браузерные проверки по умолчанию используют установленный Edge. На Linux: `npx playwright install --with-deps chromium`. Можно установить Chromium и выбрать его через `PLAYWRIGHT_CHANNEL=chromium`, либо проверять Chrome через `PLAYWRIGHT_CHANNEL=chrome`. CI проверяет Chromium на Node.js 22 и 24.
+
+[Angular-пример](docs/ANGULAR.md) хранит зависимости и lock-файл отдельно в `examples/angular`. Проверка устанавливает их автоматически; пакет библиотеки остаётся без runtime dependencies. После `npm run test:angular` можно открыть production-пример через `node scripts/serve-angular.mjs` на `http://127.0.0.1:5182/shop`.
 
 Сборка и локальный tarball:
 
