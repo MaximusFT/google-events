@@ -4,7 +4,7 @@
 
 Это актуальный план следующего цикла работ. Старый аудит и история MVP остаются в PROJECT_PLAN.md. Пункты ниже — план, а не обещание уже реализованного API; выполненные этапы отмечаются в статусе. Реализация идёт отдельными шагами.
 
-Статус на 24 октября 2026 года: этапы 1–5 реализованы локально, этап 6 выполняется. Есть [контракт](docs/CONTRACT.md), [документация](docs/index.md), [исследование](docs/integrations/README.md), [архитектура](docs/ARCHITECTURE.md), [конфигурации](docs/CONFIGURATION.md) и [адаптеры GA4/GTM/Umami](docs/ADAPTERS.md). Добавлены [обычный script с TrackEvents и нативный браузерный ESM](docs/CONNECTIONS.md), самостоятельные HTML/JS-примеры и [замеры](docs/PERFORMANCE.md). Прошли 74 теста, 17 браузерных сценариев, типы и чистая установка ESM/CJS/NodeNext/IIFE пакета. Проверки SDK используют подставные клиенты: реальные версии SDK и поступление в панели остаются приёмкой пилота/этапа 8. Следующий шаг этапа 6 — запустить и проверить самостоятельный Angular-пример и lifecycle при замене root/маршрута.
+Статус на 24 октября 2026 года: этапы 1–6 реализованы локально. Есть [контракт](docs/CONTRACT.md), [документация](docs/index.md), [исследование](docs/integrations/README.md), [архитектура](docs/ARCHITECTURE.md), [конфигурации](docs/CONFIGURATION.md) и [адаптеры GA4/GTM/Umami](docs/ADAPTERS.md). Добавлены [обычный script с TrackEvents и нативный браузерный ESM](docs/CONNECTIONS.md), самостоятельные HTML/JS-примеры, [Angular AOT с Router/lifecycle из установленного tarball](docs/ANGULAR.md) и [замеры](docs/PERFORMANCE.md). Прошли 74 теста, 17 общих и 3 Angular браузерных сценария, типы и чистая установка ESM/CJS/NodeNext/IIFE пакета. Проверки SDK используют подставные клиенты: реальные версии SDK и поступление в панели остаются приёмкой пилота/этапа 8. Следующий этап — локальная сборка статического сайта документации; публикация выполняется отдельным действием.
 
 ## 1. Что должен получить пользователь
 
@@ -137,7 +137,7 @@ src/
 - Готово: npm ESM, CommonJS и объявления типов с проверкой чистой установки; IIFE также проверяется из установленного tarball.
 - Готово: JavaScript-модуль в браузере — самостоятельный пример без TypeScript и UI-фреймворка.
 - Готово: обычный script без сборщика — `dist/track-events.global.js`, глобальный API TrackEvents, порядок подключения и инициализация в docs/CONNECTIONS.md. Готовые файлы проверяются без Vite.
-- Показать самостоятельное подключение HTML, React и Angular: mount/unmount, динамические элементы, маршрутизация. Angular-пример считать подтверждённым только после запуска и проверки.
+- Готово: HTML/script/ESM и React StrictMode, динамические элементы; Angular 21 production AOT из установленного tarball, директива после рендера, DestroyRef, удаление/создание root, реальный Router и browser back. Angular SSR/hydration и RouteReuseStrategy отдельно не подтверждены. Сценарии Angular входят в `npm run check:all` через `npm run test:angular`.
 - Готово: размеры сборок и стоимость trackElement на обычном/глубоком DOM; скрипт `npm run measure`, условия и исходные серии в docs/PERFORMANCE.md и docs/benchmarks/browser.json.
 - Готово: версионирование assets и переносимые относительные/собственные URL в docs/CONNECTIONS.md. Публичный CDN не заявлен.
 

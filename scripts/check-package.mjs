@@ -18,7 +18,7 @@ try {
   const [packed] = JSON.parse(run([npmCli, 'pack', '--ignore-scripts', '--json', '--pack-destination', taskDir], workspace));
   assert.deepEqual(packed.files.map((file) => file.path).sort(), [
     'LICENSE', 'README.md', 'CHANGELOG.md', 'docs/CONTRACT.md', 'docs/LEGACY.md', 'docs/MIGRATION.md', 'docs/RELEASE.md', 'docs/SITE_PILOT.md',
-    'docs/index.md', 'docs/getting-started.md', 'docs/DOCUMENTATION_PLAN.md', 'docs/ARCHITECTURE.md', 'docs/CONFIGURATION.md', 'docs/ADAPTERS.md', 'docs/CONNECTIONS.md', 'docs/PERFORMANCE.md', 'docs/benchmarks/browser.json',
+    'docs/index.md', 'docs/getting-started.md', 'docs/DOCUMENTATION_PLAN.md', 'docs/ARCHITECTURE.md', 'docs/CONFIGURATION.md', 'docs/ADAPTERS.md', 'docs/CONNECTIONS.md', 'docs/ANGULAR.md', 'docs/PERFORMANCE.md', 'docs/benchmarks/browser.json',
     'docs/integrations/README.md', 'docs/integrations/TEMPLATE.md',
     'docs/integrations/ga4.md', 'docs/integrations/gtm.md', 'docs/integrations/umami.md',
     'docs/integrations/plausible.md', 'docs/integrations/posthog.md', 'docs/integrations/mixpanel.md',
@@ -28,6 +28,10 @@ try {
     'dist/track-events.global.js', 'dist/track-events.global.js.map',
     'examples/browser/classic.html', 'examples/browser/classic.js',
     'examples/browser/module.html', 'examples/browser/module.js',
+    'examples/angular/angular.json', 'examples/angular/package.json', 'examples/angular/tsconfig.json',
+    'examples/angular/src/index.html', 'examples/angular/src/main.ts', 'examples/angular/src/styles.css',
+    'examples/angular/src/event-log.ts', 'examples/angular/src/track-context.directive.ts',
+    'examples/angular/src/product-card.ts', 'examples/angular/src/pages.ts',
   ].sort());
   mkdirSync(consumer);
   writeFileSync(join(consumer, 'package.json'), JSON.stringify({ name: 'package-consumer', private: true, type: 'module' }));

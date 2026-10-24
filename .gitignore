@@ -12,6 +12,7 @@ test-results
 playwright-report
 dist
 dist-ssr
+.angular
 *.local
 
 # Editor directories and files

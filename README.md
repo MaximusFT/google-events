@@ -195,10 +195,13 @@ npm run dev
 ```sh
 npm run check        # Типы, алгоритм/DOM, установленный пакет.
 npm run test:browser # Реальный браузер и демо.
+npm run test:angular # Установка tarball в Angular, production AOT и Router/lifecycle в браузере.
 npm run check:all    # Всё вместе.
 ```
 
 На Windows браузерные проверки по умолчанию используют установленный Edge. На Linux: `npx playwright install --with-deps chromium`. Можно установить Chromium и выбрать его через `PLAYWRIGHT_CHANNEL=chromium`, либо проверять Chrome через `PLAYWRIGHT_CHANNEL=chrome`. CI проверяет Chromium на Node.js 22 и 24.
+
+[Angular-пример](docs/ANGULAR.md) хранит зависимости и lock-файл отдельно в `examples/angular`. Проверка устанавливает их автоматически; пакет библиотеки остаётся без runtime dependencies. После `npm run test:angular` можно открыть production-пример через `node scripts/serve-angular.mjs` на `http://127.0.0.1:5182/shop`.
 
 Сборка и локальный tarball:
 

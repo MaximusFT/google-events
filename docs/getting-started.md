@@ -57,4 +57,4 @@ tracker.start();
 
 Выберите путь из [каталога интеграций](integrations/README.md): доступны callback/dataLayer и отдельные [адаптеры GA4/GTM/Umami](ADAPTERS.md). Клиенты SDK предоставляет приложение. Их загрузка, согласие на отправку и подтверждение приёма — отдельные части интеграции.
 
-Для сайта без сборщика доступны [обычный script с TrackEvents и нативный ESM](CONNECTIONS.md), включая самостоятельные HTML/JS-примеры. React проверен в StrictMode; Angular-пример ещё предстоит проверить.
+Для сайта без сборщика доступны [обычный script с TrackEvents и нативный ESM](CONNECTIONS.md), включая самостоятельные HTML/JS-примеры. React проверен в StrictMode; [Angular — отдельной production AOT-сборкой и сценариями Router/lifecycle](ANGULAR.md).

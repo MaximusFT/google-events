@@ -32,6 +32,10 @@
     "examples/react",
     "examples/configuration.mjs",
     "examples/browser",
+    "examples/angular/src",
+    "examples/angular/package.json",
+    "examples/angular/angular.json",
+    "examples/angular/tsconfig.json",
     "dist/track-events.global.js",
     "dist/track-events.global.js.map",
     "dist/index.js",
@@ -69,9 +73,11 @@
     "test:package": "node scripts/check-package.mjs",
     "test:browser": "playwright test",
     "test:site": "playwright test --config playwright.site.config.mjs",
+    "prepare:angular": "npm run build && node scripts/prepare-angular.mjs",
+    "test:angular": "npm run prepare:angular && npm --prefix examples/angular run build && playwright test --config playwright.angular.config.mjs",
     "measure": "npm run build && node scripts/measure.mjs",
     "check": "npm run typecheck && npm test && npm run test:package",
-    "check:all": "npm run check && npm run test:browser",
+    "check:all": "npm run check && npm run test:browser && npm run test:angular",
     "prepack": "npm run check"
   },
   "devDependencies": {

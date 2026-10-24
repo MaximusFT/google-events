@@ -9,5 +9,6 @@
     "skipLibCheck": true,
     "lib": ["ES2020", "DOM", "DOM.Iterable"]
   },
-  "include": ["examples", "src"]
+  "include": ["examples", "src"],
+  "exclude": ["examples/angular"]
 }
