@@ -6,6 +6,8 @@
 
 [Документация](docs/index.md) · [Первое событие](docs/getting-started.md) · [Исследование интеграций](docs/integrations/README.md).
 
+Сайт документации с поиском и playground доступен локально: `npm run docs:build`, затем `npm run docs:preview`. [Сборка и проверка переноса в подпуть](docs/WEBSITE.md). Публичная публикация ещё не выполнена.
+
 Для обычного сайта без сборщика: [script с глобальным TrackEvents или браузерный ESM](docs/CONNECTIONS.md). [Размеры и воспроизводимые замеры](docs/PERFORMANCE.md).
 
 Пакет `@maximusft/google-events`: контекст товара задаётся на карточке, расположение — на вложенном блоке, действие — на кнопке. Библиотека собирает типизированное событие и передаёт его подключённым получателям. Она работает с DOM и не зависит от React, Angular или Vue.
@@ -156,7 +158,7 @@ await tracker.flush();
 
 Готовы отдельные `createGa4Receiver`, `createGtmReceiver` и `createUmamiReceiver` с передаваемыми клиентами: [настройки, mapping и ограничения](docs/ADAPTERS.md). Локальные тесты используют подставные SDK; реальный приём в панелях ещё предстоит подтвердить.
 
-Получатель реализует `EventReceiver<TrackEvent>`: `{ name, filter?, send(event, context) }`. Имена должны быть непустыми и уникальными. Filter синхронно возвращает boolean, send возвращает void либо Promise<void>. Callback-адаптер дополнительно поддерживает синхронный transform в любую схему:
+Получатель реализует `EventReceiver<TrackEvent>`: `{ name, filter?, send(event, context) }`. Имена должны быть непустыми и уникальными. Filter синхронно возвращает boolean, send возвращает void либо `Promise<void>`. Callback-адаптер дополнительно поддерживает синхронный transform в любую схему:
 
 ```ts
 const receiver = createCallbackReceiver({

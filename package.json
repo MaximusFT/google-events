@@ -76,6 +76,9 @@
     "prepare:angular": "npm run build && node scripts/prepare-angular.mjs",
     "test:angular": "npm run prepare:angular && npm --prefix examples/angular run build && playwright test --config playwright.angular.config.mjs",
     "measure": "npm run build && node scripts/measure.mjs",
+    "docs:build": "node scripts/build-docs.mjs",
+    "docs:check": "node scripts/build-docs.mjs --check",
+    "docs:preview": "node scripts/serve-docs.mjs",
     "check": "npm run typecheck && npm test && npm run test:package",
     "check:all": "npm run check && npm run test:browser && npm run test:angular",
     "prepack": "npm run check"

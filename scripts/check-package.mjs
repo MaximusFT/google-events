@@ -20,6 +20,7 @@ try {
     'LICENSE', 'README.md', 'CHANGELOG.md', 'docs/CONTRACT.md', 'docs/LEGACY.md', 'docs/MIGRATION.md', 'docs/RELEASE.md', 'docs/SITE_PILOT.md',
     'docs/index.md', 'docs/getting-started.md', 'docs/DOCUMENTATION_PLAN.md', 'docs/ARCHITECTURE.md', 'docs/CONFIGURATION.md', 'docs/ADAPTERS.md', 'docs/CONNECTIONS.md', 'docs/ANGULAR.md', 'docs/PERFORMANCE.md', 'docs/benchmarks/browser.json',
     'docs/integrations/README.md', 'docs/integrations/TEMPLATE.md',
+    'docs/API.md', 'docs/PLAYGROUND.md', 'docs/WEBSITE.md',
     'docs/integrations/ga4.md', 'docs/integrations/gtm.md', 'docs/integrations/umami.md',
     'docs/integrations/plausible.md', 'docs/integrations/posthog.md', 'docs/integrations/mixpanel.md',
     'docs/integrations/amplitude.md', 'docs/integrations/matomo.md',

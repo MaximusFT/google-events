@@ -1,0 +1,10 @@
+:root { --vp-c-brand-1: #315ca8; --vp-c-brand-2: #426db9; --vp-c-brand-3: #315ca8; --vp-font-family-base: ui-sans-serif, system-ui, sans-serif; }
+.dark { --vp-c-brand-1: #a5c5ff; --vp-c-brand-2: #82adee; --vp-c-brand-3: #315ca8; }
+.release-note { max-width: 1152px; margin: 0 auto 48px; padding: 0 24px; color: var(--vp-c-text-2); }
+.playground { padding: 20px; border: 1px solid var(--vp-c-divider); border-radius: 12px; margin: 24px 0; }
+.playground label { display: block; margin: 10px 0; }
+.playground input[type=text] { border: 1px solid var(--vp-c-divider); border-radius: 5px; padding: 4px 8px; width: 140px; margin-left: 8px; }
+.playground button { border: 1px solid var(--vp-c-divider); border-radius: 6px; padding: 6px 12px; margin: 6px 8px 6px 0; background: var(--vp-c-bg-soft); }
+.playground section { padding: 12px; margin: 16px 0; border-left: 3px solid var(--vp-c-brand-1); }
+.playground pre { overflow: auto; padding: 12px; background: var(--vp-c-bg-soft); font-size: 13px; line-height: 1.6; }
+.playground button:focus-visible, .playground input:focus-visible { outline: 2px solid var(--vp-c-brand-1); outline-offset: 3px; }

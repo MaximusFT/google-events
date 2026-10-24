@@ -35,7 +35,7 @@ tracker.start();
 
 ## Настройки GA4
 
-`createGa4Receiver(options)` → EventReceiver<TrackEvent>.
+`createGa4Receiver(options)` → `EventReceiver<TrackEvent>`.
 
 | Настройка | Правило |
 | --- | --- |
@@ -67,7 +67,7 @@ createGa4Receiver({
 
 ## Настройки Umami
 
-`createUmamiReceiver({ name?, getClient, filter?, transform? })` → EventReceiver<TrackEvent>. Default-имя umami; transform возвращает `{ name, data }`, по умолчанию используются нейтральные name/properties. Клиент предоставляет метод track(name, data), и его this сохраняется.
+`createUmamiReceiver({ name?, getClient, filter?, transform? })` → `EventReceiver<TrackEvent>`. Default-имя umami; transform возвращает `{ name, data }`, по умолчанию используются нейтральные name/properties. Клиент предоставляет метод track(name, data), и его this сохраняется.
 
 Первый адаптер поддерживает плоские data со string/number/boolean, конечные числа, до 50 свойств, строки до 500 символов и имя до 50 символов. Неверное поле отклоняет эту отправку; тихого усечения/округления нет. JSON-возможности самого Umami шире: для иных структур остаётся callback. Дополнительная обработка чисел самим сервисом и его ограничения не подменяются локальной валидацией. [Функции и данные](https://docs.umami.is/docs/tracker-functions), [имена событий](https://docs.umami.is/docs/track-events).
 

@@ -13,6 +13,10 @@ playwright-report
 dist
 dist-ssr
 .angular
+website/content
+website/public
+website/.vitepress/cache
+website/.vitepress/dist-subpath
 *.local
 
 # Editor directories and files
